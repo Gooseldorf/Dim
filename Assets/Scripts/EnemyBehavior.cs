@@ -31,12 +31,15 @@ public class EnemyBehavior : MonoBehaviour
 
     //Audio
     [SerializeField] private AudioClip[] ghoulSounds;
+    [SerializeField] private AudioClip[] ghoulFootstepSounds;
     private AudioSource _ghoulAudioSource;
+    [SerializeField] private float footstepOffset = 0.5f;
+    private float _footstepTimer = 0;
     
     //Animation
     private Animation enemyAnimation;
-    
-    
+
+
     private void OnEnable()
     {
         EventManager.OnSafeSpaceTrigger += HideFromPlayer;
@@ -53,6 +56,7 @@ public class EnemyBehavior : MonoBehaviour
         _ghoulAudioSource.PlayOneShot(ghoulSounds[0]);
         _player = GameObject.FindGameObjectWithTag("Player").transform;
         _agent = GetComponent<NavMeshAgent>();
+        sightRange = 30;
         
         enemyAnimation = gameObject.GetComponent<Animation>();
         enemyAnimation.clip = enemyAnimation.GetClip("Idle");
@@ -62,7 +66,6 @@ public class EnemyBehavior : MonoBehaviour
     
     public void Update()
     {
-        
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, isPlayer);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
         
@@ -96,90 +99,102 @@ public class EnemyBehavior : MonoBehaviour
         if (Physics.Raycast(walkPoint, -transform.up, 2f, isGround))
             _walkPointSet = true;
     }
-    
-    
+
+
     private void Chase()
     {
         _agent.SetDestination(_player.position);
         enemyAnimation.clip = enemyAnimation.GetClip("Run");
         enemyAnimation.Play();
-    }
-    private void Attack()
-    {
-        _agent.SetDestination(transform.position);
-        transform.LookAt(_player);
-        transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, transform.eulerAngles.z);
-        timeBetweenAttacks = enemyAnimation.GetClip("Attack2").length;
-        
-        if (!_isAttacking)
+        _footstepTimer -= Time.deltaTime;
+        if (_footstepTimer <= 0)
         {
-            _isAttacking = true;
-            enemyAnimation.clip = enemyAnimation.GetClip("Attack2");
-            enemyAnimation.Play();
-            _ghoulAudioSource.PlayOneShot(ghoulSounds[1]);
-            
-            //Костыль LegacyAnimation антагониста. По хорошему - конвертировать в custom запилить ивент в анимации.
-            float timeToDamageAnimation = 1f;
-            Invoke(nameof(DeliverDamageByAnimation),timeToDamageAnimation);
-            
-            Invoke(nameof(ResetAttack),timeBetweenAttacks);
+            _ghoulAudioSource.PlayOneShot(ghoulFootstepSounds[Random.Range(0, ghoulFootstepSounds.Length - 1)]);
+            _footstepTimer = footstepOffset;
         }
     }
-    private void DeliverDamageByAnimation()
-    {
-        FirstPersonController.OnTakeDamage(damage);
-    }
-    private void ResetAttack()
-    {
-        _isAttacking = false;
-    }
-    
-    
-    public void TakeDamage(int damage)
-    {
-        health -= damage;
-        if (health < 0)
-            Invoke(nameof(DestroyEnemy),0.5f);
-    }
-    private void DestroyEnemy()
-    {
-        Destroy(gameObject);
-    }
-    
-    private void HideFromPlayer()
-    {
-        _ghoulAudioSource.PlayOneShot(ghoulSounds[2]);
-        _agent.speed = 3;
-        enemyAnimation.clip = enemyAnimation.GetClip("Run");
-        enemyAnimation.PlayQueued("Run");
-        sightRange = 0;
-        Vector3 closestWaypoint = FindClosestWayPoint();
-        _agent.SetDestination(closestWaypoint);
-    }
-    Vector3 FindClosestWayPoint()
-    {
-        Vector3 closestWayPoint = default;
-        float minDistance = Single.MaxValue;
-        foreach (var waypoint in placesToHide)
+
+    private void Attack()
         {
-            if (Vector3.Distance(transform.position, waypoint.position) < minDistance)
+            _agent.SetDestination(transform.position);
+            transform.LookAt(_player);
+            transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, transform.eulerAngles.z);
+            timeBetweenAttacks = enemyAnimation.GetClip("Attack2").length;
+        
+            if (!_isAttacking)
             {
-                closestWayPoint = waypoint.position;
-                minDistance = Vector3.Distance(transform.position, waypoint.position);
+                _isAttacking = true;
+                enemyAnimation.clip = enemyAnimation.GetClip("Attack2");
+                enemyAnimation.Play();
+                _ghoulAudioSource.PlayOneShot(ghoulSounds[1]);
+            
+                //Костыль LegacyAnimation антагониста. По хорошему - конвертировать в custom запилить ивент в анимации.
+                float timeToDamageAnimation = 1f;
+                Invoke(nameof(DeliverDamageByAnimation),timeToDamageAnimation);
+            
+                Invoke(nameof(ResetAttack),timeBetweenAttacks);
             }
         }
-        return closestWayPoint;
-    }
+        private void DeliverDamageByAnimation()
+        {
+            if(playerInAttackRange)
+                FirstPersonController.OnTakeDamage(damage);
+        }
+        private void ResetAttack()
+        {
+            _isAttacking = false;
+        }
+    
+        public void TakeDamage(int damage)
+        {
+            health -= damage;
+            if (health < 0)
+                Invoke(nameof(DestroyEnemy),0.5f);
+        }
+
+        private void DeactivateEnemy()
+        {
+            gameObject.SetActive(false);
+        }
+        private void DestroyEnemy()
+        {
+            Destroy(gameObject);
+        }
+    
+        private void HideFromPlayer()
+        {
+            _ghoulAudioSource.PlayOneShot(ghoulSounds[2]);
+            enemyAnimation.clip = enemyAnimation.GetClip("Run");
+            enemyAnimation.PlayQueued("Run");
+            sightRange = 0;
+            Vector3 closestWaypoint = FindClosestWayPoint();
+            _agent.SetDestination(closestWaypoint);
+            Invoke(nameof(DeactivateEnemy),5f);
+        }
+        Vector3 FindClosestWayPoint()
+        {
+            Vector3 closestWayPoint = default;
+            float minDistance = Single.MaxValue;
+            foreach (var waypoint in placesToHide)
+            {
+                if (Vector3.Distance(transform.position, waypoint.position) < minDistance)
+                {
+                    closestWayPoint = waypoint.position;
+                    minDistance = Vector3.Distance(transform.position, waypoint.position);
+                }
+            }
+            return closestWayPoint;
+        }
     
     
     
     
     
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, sightRange);
-    }
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, attackRange);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, sightRange);
+        }
 }

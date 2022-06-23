@@ -8,9 +8,9 @@ public class Trigger : MonoBehaviour
 {
     //private Action _setTriggerInactive;
     
-    private GameObject enemy;
+    [SerializeField] private GameObject enemy;
     public GameObject spawner;
-    [SerializeField] public bool CanTrigger = true;
+    [SerializeField] public bool canTrigger = true;
     [SerializeField] [Range(0f, 100f)] private float spawnChance = 50f;
 
     private void OnEnable()
@@ -23,16 +23,10 @@ public class Trigger : MonoBehaviour
         EventManager.OnMonsterTrigger -= SetInactive;
         EventManager.OnSafeSpaceTrigger -= SetActive;
     }
-
-    private void Awake()
-    {
-        enemy = GameObject.Find("Ghoul");
-    }
     
-
     private void OnTriggerEnter(Collider other)
     {
-        if (CanTrigger)
+        if (canTrigger)
         {
             if (Random.value < spawnChance / 100f)
             {
@@ -45,11 +39,11 @@ public class Trigger : MonoBehaviour
 
     private void SetInactive()
     {
-        CanTrigger = false;
+        canTrigger = false;
     }
 
     private void SetActive()
     {
-        CanTrigger = true;
+        canTrigger = true;
     }
 }

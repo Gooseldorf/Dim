@@ -1,9 +1,7 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-using TMPro;
-using Unity.VisualScripting;
+
 public class DoorScript : Interactable
 {
     private NavMeshObstacle _obstacle;
@@ -19,6 +17,10 @@ public class DoorScript : Interactable
 
     private Coroutine _animationCoroutine;
 
+    [SerializeField] private AudioClip[] doorSounds;
+    private AudioSource doorAudioSource;
+    
+
     
     private void Awake()
     {
@@ -30,6 +32,7 @@ public class DoorScript : Interactable
         _startRotation1 = transform.rotation.eulerAngles;
         _closedPosition = transform.rotation;
         _openedPosition = Quaternion.Euler(0, _startRotation1.y + 90,0);
+        doorAudioSource = GetComponent<AudioSource>();
     }
 
     public void Open()
@@ -38,12 +41,14 @@ public class DoorScript : Interactable
         {
             if (CheckKey())
             {
+                doorAudioSource.PlayOneShot(doorSounds[3]);
                 isLocked = false;
             }
-        }
-        else
-        {
-            print("locked");
+            else
+            {
+                print("locked");
+                doorAudioSource.PlayOneShot(doorSounds[2]);
+            }
         }
         if (!isOpen && !isLocked)
         {
@@ -64,6 +69,7 @@ public class DoorScript : Interactable
 
     private IEnumerator DoRotationOpen()
     {
+        doorAudioSource.PlayOneShot(doorSounds[0]);
         isOpen = true;
         float time = 0;
         while (_closedPosition != _openedPosition)
@@ -76,6 +82,7 @@ public class DoorScript : Interactable
 
     public void Close()
     {
+        doorAudioSource.PlayOneShot(doorSounds[1]);
         if (isOpen)
         {
             if (_animationCoroutine != null)
@@ -122,20 +129,15 @@ public class DoorScript : Interactable
     }
     public override void OnInteract()
     {
-        print($"INTERACTION!");
         if (gameObject.TryGetComponent<DoorScript>(out DoorScript door))
         {
             if (door.isOpen)
             {
                 door.Close();
-                print($"CLOSING!");
-
             }
             else
             {
                 door.Open();
-                print($"OPENING!");
-
             }
         }
     }

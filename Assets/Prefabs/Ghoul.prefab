@@ -1174,22 +1174,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c686deb194e467e4c959664cbb7e24d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _player: {fileID: 0}
   isGround:
     serializedVersion: 2
     m_Bits: 64
   isPlayer:
     serializedVersion: 2
     m_Bits: 128
+  placesToHide: []
   walkPoint: {x: 0, y: 0, z: 0}
   walkPointRange: 0
-  timeBetweenAttacks: 0
+  rotationSpeed: 10
+  damage: 50
   sightRange: 50
   attackRange: 2
-  playerInSightRange: 0
-  playerInAttackRange: 0
   health: 10
   ghoulSounds:
   - {fileID: 8300000, guid: e66b136e063cc4049b96679b13228187, type: 3}
+  ghoulFootstepSounds: []
+  footstepOffset: 0.5
 --- !u!195 &3081974421181499603
 NavMeshAgent:
   m_ObjectHideFlags: 0
