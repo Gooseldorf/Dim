@@ -284,7 +284,7 @@ namespace PlayerMovement
             _footstepTimer -= Time.deltaTime;
             if (_footstepTimer <= 0)
             {
-                if (Physics.Raycast(_playerCamera.transform.position, Vector3.down, out RaycastHit hit, 4))
+                if (Physics.Raycast(_characterController.transform.position, Vector3.down, out RaycastHit hit, 4))
                 {
                     switch (hit.collider.tag)
                     {
@@ -300,8 +300,8 @@ namespace PlayerMovement
                         case "Footsteps/grass":
                             footstepAudioSource.PlayOneShot(grassClips[Random.Range(0, grassClips.Length-1)]);
                             break;
-                        default: break;
-
+                        default: 
+                            break;
                     }
                 }
                 _footstepTimer = GetCurrentOffset;
