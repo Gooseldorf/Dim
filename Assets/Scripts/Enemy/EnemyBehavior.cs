@@ -25,8 +25,8 @@ public class EnemyBehavior : MonoBehaviour
     [SerializeField] private float damage = 50;
     
     //States
-    [SerializeField]private float sightRange, attackRange;
-    private bool playerInSightRange, playerInAttackRange;
+    [SerializeField]private float sightRange, attackRange, damageRange;
+    private bool playerInSightRange, playerInAttackRange, playerInDamageRange;
     [SerializeField] private float health;
 
     //Audio
@@ -69,6 +69,8 @@ public class EnemyBehavior : MonoBehaviour
     {
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, isPlayer);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
+        playerInDamageRange = Physics.CheckSphere(transform.position, damageRange, isPlayer);
+        
         
         //if(!playerInSightRange && !playerInAttackRange) Patrolling();
         if(playerInSightRange && !playerInAttackRange && !_isAttacking) Chase();
@@ -139,7 +141,7 @@ public class EnemyBehavior : MonoBehaviour
     
     private void DeliverDamageByAnimation()
         {
-            if(playerInAttackRange)
+            if(playerInDamageRange)
                 FirstPersonController.OnTakeDamage(damage);
         }
     private void ResetAttack()
@@ -185,9 +187,6 @@ public class EnemyBehavior : MonoBehaviour
         return closestWayPoint;
     }
 
-   
-    
-    
     
     
     private void OnDrawGizmosSelected()

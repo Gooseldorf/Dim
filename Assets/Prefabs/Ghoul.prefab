@@ -1187,7 +1187,8 @@ MonoBehaviour:
   rotationSpeed: 10
   damage: 50
   sightRange: 50
-  attackRange: 2
+  attackRange: 1.5
+  damageRange: 2.5
   health: 10
   ghoulActionSounds:
   - {fileID: 8300000, guid: e66b136e063cc4049b96679b13228187, type: 3}

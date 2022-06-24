@@ -42,6 +42,7 @@ namespace PlayerMovement
         [SerializeField] private float healthTimeIncrement = 0.1f;
         private float _currentHealth;
         private Coroutine _healthRegeneration;
+        private bool canRegenerate;
         public static Action<float> OnTakeDamage;
         public static Action<float> OnDamage;
         public static Action<float> OnHeal;
@@ -114,17 +115,19 @@ namespace PlayerMovement
         [SerializeField] private AudioClip onDamage;
         [SerializeField] private AudioClip onHit;
         [SerializeField] private AudioClip heartbeat;
+        [SerializeField] private AudioClip breathing;
+        [SerializeField] private AudioClip[] flashLight = default;
         [SerializeField] private float heartbeatOffset = 0.7f;
         private float _heartbeatTimer = 0;
-        
+        private float _breathTimer = 0;
+
         //Post Processing
         private PostProcessVolume _postProcessVolume;
-        private float _postProcessSpeed = 0.5f;
         
         //Flashlight
         private Light _flashLight;
         private float _flashLightIntensity;
-        private bool flashLightOn = true;
+        private bool _flashLightOn = true;
         private float maxBlinkingSpeed = 0.1f;
         
         
@@ -177,6 +180,8 @@ namespace PlayerMovement
             {
                 HandleMouseLook();
                 HandleMoveInput();
+                if(_currentHealth<maxHealth)
+                    PlayRegenEffects();
                 if (useFootsteps)
                     HandleFootSteps();
                 if(canJump)
@@ -192,8 +197,6 @@ namespace PlayerMovement
                     HandleInteractionCheck();
                     HandleInteractionInput();
                 }
-                if(_currentHealth<maxHealth)
-                    PlayRegenEffects();
                 HandleFlashLight();
                 
                     
@@ -210,6 +213,7 @@ namespace PlayerMovement
             float moveDirectionY = _moveDirection.y;
             _moveDirection = (transform.TransformDirection(Vector3.forward) * _currentInput.x) + (transform.TransformDirection(Vector3.right) * _currentInput.y);
             _moveDirection.y = moveDirectionY;
+            
         }
 
         private void HandleMouseLook()
@@ -315,6 +319,7 @@ namespace PlayerMovement
                     switch (hit.collider.tag)
                     {
                         case "Footsteps/stone":
+                            print("stone");
                             footstepAudioSource.PlayOneShot(stoneClips[Random.Range(0, stoneClips.Length-1)]);
                             break;
                         case "Footsteps/grass":
@@ -345,16 +350,16 @@ namespace PlayerMovement
         {
             footstepAudioSource.PlayOneShot(onHit);
             footstepAudioSource.PlayOneShot(onDamage);
+            StartCoroutine(FlashLightBlinking());
+            canRegenerate = false;
             
             _currentHealth -= damage;
             OnDamage?.Invoke(_currentHealth);
             
             if(_currentHealth <= 0)
                 KillPlayer();
-            // else if(_healthRegeneration != null)
-            //     StopCoroutine(_healthRegeneration);
             
-            StartCoroutine(FlashLightBlinking());
+            
             
             StartCoroutine(RegenerateHealth());
         }
@@ -365,6 +370,45 @@ namespace PlayerMovement
             if (_healthRegeneration != null)
                 StopCoroutine(RegenerateHealth());
             print("DEAD");
+        }
+        private void PlayRegenEffects()
+        {
+            if (_currentHealth != 0) 
+                _postProcessVolume.weight = (maxHealth - _currentHealth) / 100;
+            _heartbeatTimer -= Time.deltaTime;
+            if (_heartbeatTimer <= 0)
+            {
+                footstepAudioSource.PlayOneShot(heartbeat);
+                _heartbeatTimer = heartbeatOffset;
+            }
+            HardBreathing();
+        }
+        private void HandleFlashLight()
+        {
+            if (ToggleFlashLight && _flashLightOn)
+            {
+                footstepAudioSource.PlayOneShot(flashLight[1]);
+                _flashLight.intensity = 0;
+                _flashLightOn = false;
+            }
+            else if (ToggleFlashLight && !_flashLightOn)
+            {
+                footstepAudioSource.PlayOneShot(flashLight[0]);
+                _flashLight.intensity = _flashLightIntensity;
+                _flashLightOn = true;
+
+                
+            }
+        }
+
+        private void HardBreathing()
+        {
+            _breathTimer -= Time.deltaTime;
+            if (_breathTimer <= 0)
+            {
+                footstepAudioSource.PlayOneShot(breathing);
+                _breathTimer = breathing.length;
+            }
         }
 
         
@@ -414,63 +458,48 @@ namespace PlayerMovement
         }
         private IEnumerator RegenerateHealth()
         {
+            canSprint = false;
             yield return new WaitForSeconds(timeBeforeRegeneration);
-            
-            WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-            while (_currentHealth < maxHealth)
+            canRegenerate = true;
+            if (canRegenerate)
             {
-                _currentHealth += healthValueIncrement;
-                
-                if (_currentHealth > maxHealth)
-                    _currentHealth = maxHealth;
-                OnHeal?.Invoke(_currentHealth);
+                WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-                yield return timeToWait;
+                while (_currentHealth < maxHealth && canRegenerate)
+                {
+                    _currentHealth += healthValueIncrement;
+                    
+                    if (_currentHealth > maxHealth)
+                        _currentHealth = maxHealth;
+                    OnHeal?.Invoke(_currentHealth);
+
+                    yield return timeToWait;
+                }
+
+                if (Math.Abs(_currentHealth - maxHealth) < 0.1f)
+                    canSprint = true;
+                _healthRegeneration = null;
+                
             }
-            _healthRegeneration = null;
         }
 
         private IEnumerator FlashLightBlinking()
         {
-            if (flashLightOn)
+            if (_flashLightOn)
             {
                 for (int i = 0; i < 4; i++)
                 {
-                _flashLight.enabled = false;
-                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
-                
-                _flashLight.enabled = true;
-                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    _flashLight.enabled = false;
+                    yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    
+                    _flashLight.enabled = true;
+                    yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
                     
                 }
             }
         }
 
-        private void PlayRegenEffects()
-        {
-            
-            if (_currentHealth != 0) 
-                _postProcessVolume.weight = (maxHealth - _currentHealth) / 100;
-            _heartbeatTimer -= Time.deltaTime;
-            if (_heartbeatTimer <= 0)
-            {
-                footstepAudioSource.PlayOneShot(heartbeat);
-                _heartbeatTimer = heartbeatOffset;
-            }
-        }
-        private void HandleFlashLight()
-        {
-            if (ToggleFlashLight && flashLightOn)
-            {
-                _flashLight.intensity = 0;
-                flashLightOn = false;
-            }
-            else if (ToggleFlashLight && !flashLightOn)
-            {
-                _flashLight.intensity = _flashLightIntensity;
-                flashLightOn = true;
-            }
-        }
+
     }
 }
