@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
+using PostProcessAttribute = UnityEngine.Rendering.PostProcessing.PostProcessAttribute;
 using Random = UnityEngine.Random;
 
 namespace PlayerMovement
@@ -11,6 +14,7 @@ namespace PlayerMovement
         private bool IsSprinting => canSprint && Input.GetKey(sprintKey);
         private bool ShouldJump => Input.GetKeyDown(jumpKey) && _characterController.isGrounded && !IsSliding;
         private bool ShouldCrouch => Input.GetKeyDown(crouchKey) &&_characterController.isGrounded && !_duringCrouchAnimation;
+        private bool ToggleFlashLight => Input.GetKeyDown(flashLightKey);
     
         [Header("Functional parameters")] 
         [SerializeField] private bool canSprint = true;
@@ -29,6 +33,7 @@ namespace PlayerMovement
         [SerializeField] private KeyCode crouchKey = KeyCode.LeftControl;
         [SerializeField] private KeyCode zoomKey = KeyCode.Mouse1;
         [SerializeField] private KeyCode interactKey = KeyCode.E;
+        [SerializeField] private KeyCode flashLightKey = KeyCode.F;
 
         [Header("Health")] 
         [SerializeField] private float maxHealth = 100f;
@@ -99,15 +104,30 @@ namespace PlayerMovement
         [SerializeField] private float crouchStepMultiplier = 1.5f;
         [SerializeField] private float sprintStepMultiplier = 0.6f;
         [SerializeField] private AudioSource footstepAudioSource = default;
-        [SerializeField] private AudioClip[] woodClips = default;
         [SerializeField] private AudioClip[] grassClips = default;
         [SerializeField] private AudioClip[] stoneClips = default;
-        [SerializeField] private AudioClip[] carpetClips = default;
         private float _footstepTimer = 0;
         private float GetCurrentOffset => _isCrouching ? baseStepSpeed * crouchStepMultiplier :
             IsSprinting ? baseStepSpeed * sprintStepMultiplier : baseStepSpeed;
 
-
+        [Header("Audio")] 
+        [SerializeField] private AudioClip onDamage;
+        [SerializeField] private AudioClip onHit;
+        [SerializeField] private AudioClip heartbeat;
+        [SerializeField] private float heartbeatOffset = 0.7f;
+        private float _heartbeatTimer = 0;
+        
+        //Post Processing
+        private PostProcessVolume _postProcessVolume;
+        private float _postProcessSpeed = 0.5f;
+        
+        //Flashlight
+        private Light _flashLight;
+        private float _flashLightIntensity;
+        private bool flashLightOn = true;
+        private float maxBlinkingSpeed = 0.1f;
+        
+        
         //SLIDING
         private Vector3 _hitPointNormal;
         private bool IsSliding
@@ -146,6 +166,9 @@ namespace PlayerMovement
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             _currentHealth = maxHealth;
+            _postProcessVolume = _playerCamera.GetComponent<PostProcessVolume>();
+            _flashLight = GetComponentInChildren<Light>();
+            _flashLightIntensity = _flashLight.intensity;
         }
         
         void Update()
@@ -169,6 +192,9 @@ namespace PlayerMovement
                     HandleInteractionCheck();
                     HandleInteractionInput();
                 }
+                if(_currentHealth<maxHealth)
+                    PlayRegenEffects();
+                HandleFlashLight();
                 
                     
                 ApplyFinalMovements();
@@ -288,14 +314,8 @@ namespace PlayerMovement
                 {
                     switch (hit.collider.tag)
                     {
-                        case "Footsteps/wood":
-                            footstepAudioSource.PlayOneShot(woodClips[Random.Range(0, woodClips.Length-1)]);
-                            break;
                         case "Footsteps/stone":
                             footstepAudioSource.PlayOneShot(stoneClips[Random.Range(0, stoneClips.Length-1)]);
-                            break;
-                        case "Footsteps/carpet":
-                            footstepAudioSource.PlayOneShot(carpetClips[Random.Range(0, carpetClips.Length-1)]);
                             break;
                         case "Footsteps/grass":
                             footstepAudioSource.PlayOneShot(grassClips[Random.Range(0, grassClips.Length-1)]);
@@ -323,17 +343,22 @@ namespace PlayerMovement
 
         private void ApplyDamage(float damage)
         {
+            footstepAudioSource.PlayOneShot(onHit);
+            footstepAudioSource.PlayOneShot(onDamage);
+            
             _currentHealth -= damage;
             OnDamage?.Invoke(_currentHealth);
             
             if(_currentHealth <= 0)
                 KillPlayer();
-            else if(_healthRegeneration != null)
-                StopCoroutine(_healthRegeneration);
-
+            // else if(_healthRegeneration != null)
+            //     StopCoroutine(_healthRegeneration);
+            
+            StartCoroutine(FlashLightBlinking());
+            
             StartCoroutine(RegenerateHealth());
         }
-
+        
         private void KillPlayer()
         {
             _currentHealth = 0;
@@ -406,6 +431,46 @@ namespace PlayerMovement
             _healthRegeneration = null;
         }
 
+        private IEnumerator FlashLightBlinking()
+        {
+            if (flashLightOn)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                _flashLight.enabled = false;
+                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                
+                _flashLight.enabled = true;
+                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    
+                }
+            }
+        }
 
+        private void PlayRegenEffects()
+        {
+            
+            if (_currentHealth != 0) 
+                _postProcessVolume.weight = (maxHealth - _currentHealth) / 100;
+            _heartbeatTimer -= Time.deltaTime;
+            if (_heartbeatTimer <= 0)
+            {
+                footstepAudioSource.PlayOneShot(heartbeat);
+                _heartbeatTimer = heartbeatOffset;
+            }
+        }
+        private void HandleFlashLight()
+        {
+            if (ToggleFlashLight && flashLightOn)
+            {
+                _flashLight.intensity = 0;
+                flashLightOn = false;
+            }
+            else if (ToggleFlashLight && !flashLightOn)
+            {
+                _flashLight.intensity = _flashLightIntensity;
+                flashLightOn = true;
+            }
+        }
     }
 }

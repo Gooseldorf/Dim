@@ -163,6 +163,10 @@ MonoBehaviour:
   crouchKey: 306
   zoomKey: 324
   interactKey: 101
+  maxHealth: 100
+  timeBeforeRegeneration: 3
+  healthValueIncrement: 1
+  healthTimeIncrement: 0.1
   walkSpeed: 1
   sprintSpeed: 2
   crouchSpeed: 0.3
@@ -207,10 +211,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 281c105661e5ee14b8e76523200338bd, type: 3}
   - {fileID: 8300000, guid: 3bd1b93317b7a3a49b13011cdaa64d0b, type: 3}
   - {fileID: 8300000, guid: e924ff5d774024542830602ee674d9a9, type: 3}
-  carpetClips:
-  - {fileID: 8300000, guid: 9fa438d00f348394a8f0f6c053659a36, type: 3}
-  - {fileID: 8300000, guid: c0282ee8475f90047ba49cc85561ea68, type: 3}
-  - {fileID: 8300000, guid: 331436654a3e2cd41a5f0445c0b90ccd, type: 3}
+  onDamage: {fileID: 8300000, guid: e732718238b3e0647b801e31dcb29ff1, type: 3}
+  onHit: {fileID: 8300000, guid: 0d07cffdf9922fb4487dceeeedcdaa26, type: 3}
+  heartbeat: {fileID: 8300000, guid: 8f9d159357b01994ea0e3a5d309627a0, type: 3}
+  heartbeatOffset: 0.5
 --- !u!114 &5213679707441314508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -235,7 +239,7 @@ AudioSource:
   m_GameObject: {fileID: 5213679707441314507}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 341618868894053359, guid: ec58bb2adfebf854cb8aa3effc16cf14, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
