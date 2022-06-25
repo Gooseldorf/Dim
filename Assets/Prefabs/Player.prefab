@@ -163,6 +163,7 @@ MonoBehaviour:
   crouchKey: 306
   zoomKey: 324
   interactKey: 101
+  flashLightKey: 102
   maxHealth: 100
   timeBeforeRegeneration: 3
   healthValueIncrement: 1
@@ -199,10 +200,6 @@ MonoBehaviour:
   crouchStepMultiplier: 1.5
   sprintStepMultiplier: 0.5
   footstepAudioSource: {fileID: 5213679707441314511}
-  woodClips:
-  - {fileID: 8300000, guid: 2802b1a72217c464ea0171ad67e835f7, type: 3}
-  - {fileID: 8300000, guid: 75d4e54cf94712d4e8de7ce385abceb2, type: 3}
-  - {fileID: 8300000, guid: 505a015d5525e0442ae4a62d5bac304d, type: 3}
   grassClips:
   - {fileID: 8300000, guid: bd5653e52c4636e4aa3b0ced8f49a18d, type: 3}
   - {fileID: 8300000, guid: 3ec9ef3892d02044a9d62e412eb45ffb, type: 3}
@@ -214,6 +211,10 @@ MonoBehaviour:
   onDamage: {fileID: 8300000, guid: e732718238b3e0647b801e31dcb29ff1, type: 3}
   onHit: {fileID: 8300000, guid: 0d07cffdf9922fb4487dceeeedcdaa26, type: 3}
   heartbeat: {fileID: 8300000, guid: 8f9d159357b01994ea0e3a5d309627a0, type: 3}
+  breathing: {fileID: 8300000, guid: 1e6839ca0a335be4da43e1c1d8632373, type: 3}
+  flashLight:
+  - {fileID: 8300000, guid: 56040f65d1dcd254ba8401387db1cbf4, type: 3}
+  - {fileID: 8300000, guid: b50b725a7060b4d4fbbdf7bb343963a2, type: 3}
   heartbeatOffset: 0.5
 --- !u!114 &5213679707441314508
 MonoBehaviour:
@@ -227,9 +228,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8654c64b6259db43a7215cb16452b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasKeyFromQuestDoor1: 1
-  hasKeyFromQuestDoor2: 1
-  hasKeyFromQuestDoor3: 1
+  hasKeyFromQuestDoor1: 0
+  hasKeyFromQuestDoor2: 0
+  hasKeyFromQuestDoor3: 0
 --- !u!82 &5213679707441314511
 AudioSource:
   m_ObjectHideFlags: 0

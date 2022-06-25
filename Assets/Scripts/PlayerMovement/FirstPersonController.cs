@@ -1,17 +1,16 @@
 using System;
 using System.Collections;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
-using PostProcessAttribute = UnityEngine.Rendering.PostProcessing.PostProcessAttribute;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace PlayerMovement
 {
     public class FirstPersonController : MonoBehaviour
     {
-        public bool CanMove { get; private set; } = true;
-        private bool IsSprinting => canSprint && Input.GetKey(sprintKey);
+        public bool CanMove { get; private set; } = true; 
+        public bool IsSprinting => canSprint && Input.GetKey(sprintKey);
         private bool ShouldJump => Input.GetKeyDown(jumpKey) && _characterController.isGrounded && !IsSliding;
         private bool ShouldCrouch => Input.GetKeyDown(crouchKey) &&_characterController.isGrounded && !_duringCrouchAnimation;
         private bool ToggleFlashLight => Input.GetKeyDown(flashLightKey);
@@ -42,6 +41,7 @@ namespace PlayerMovement
         [SerializeField] private float healthTimeIncrement = 0.1f;
         private float _currentHealth;
         private Coroutine _healthRegeneration;
+        private bool canRegenerate;
         public static Action<float> OnTakeDamage;
         public static Action<float> OnDamage;
         public static Action<float> OnHeal;
@@ -74,7 +74,7 @@ namespace PlayerMovement
         [SerializeField] private float timeToCrouch = 0.25f;
         [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);
         [SerializeField] private Vector3 standingCenter = new Vector3(0, 0, 0);
-        private bool _isCrouching;
+        public bool isCrouching;
         private bool _duringCrouchAnimation;
 
         [Header("Headbob")] 
@@ -107,25 +107,31 @@ namespace PlayerMovement
         [SerializeField] private AudioClip[] grassClips = default;
         [SerializeField] private AudioClip[] stoneClips = default;
         private float _footstepTimer = 0;
-        private float GetCurrentOffset => _isCrouching ? baseStepSpeed * crouchStepMultiplier :
+        private float GetCurrentOffset => isCrouching ? baseStepSpeed * crouchStepMultiplier :
             IsSprinting ? baseStepSpeed * sprintStepMultiplier : baseStepSpeed;
 
         [Header("Audio")] 
         [SerializeField] private AudioClip onDamage;
         [SerializeField] private AudioClip onHit;
         [SerializeField] private AudioClip heartbeat;
+        [SerializeField] private AudioClip breathing;
+        [SerializeField] private AudioClip[] flashLight = default;
         [SerializeField] private float heartbeatOffset = 0.7f;
         private float _heartbeatTimer = 0;
-        
+        private float _breathTimer = 0;
+
         //Post Processing
         private PostProcessVolume _postProcessVolume;
-        private float _postProcessSpeed = 0.5f;
         
         //Flashlight
+        public bool canUseFlashlight = true;
         private Light _flashLight;
         private float _flashLightIntensity;
-        private bool flashLightOn = true;
-        private float maxBlinkingSpeed = 0.1f;
+        public bool flashLightOn = true;
+        private float _maxBlinkingSpeed = 0.1f;
+        
+        //UI
+        private GameObject crossHair;
         
         
         //SLIDING
@@ -169,6 +175,8 @@ namespace PlayerMovement
             _postProcessVolume = _playerCamera.GetComponent<PostProcessVolume>();
             _flashLight = GetComponentInChildren<Light>();
             _flashLightIntensity = _flashLight.intensity;
+            crossHair = GameObject.Find("CrossHair");
+            crossHair.SetActive(false);
         }
         
         void Update()
@@ -177,6 +185,8 @@ namespace PlayerMovement
             {
                 HandleMouseLook();
                 HandleMoveInput();
+                if(_currentHealth<maxHealth)
+                    PlayRegenEffects();
                 if (useFootsteps)
                     HandleFootSteps();
                 if(canJump)
@@ -192,9 +202,8 @@ namespace PlayerMovement
                     HandleInteractionCheck();
                     HandleInteractionInput();
                 }
-                if(_currentHealth<maxHealth)
-                    PlayRegenEffects();
-                HandleFlashLight();
+                if(canUseFlashlight)
+                    HandleFlashLight();
                 
                     
                 ApplyFinalMovements();
@@ -205,11 +214,12 @@ namespace PlayerMovement
 
         private void HandleMoveInput()
         {
-            _currentInput = new Vector2((_isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (_isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
+            _currentInput = new Vector2((isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
 
             float moveDirectionY = _moveDirection.y;
             _moveDirection = (transform.TransformDirection(Vector3.forward) * _currentInput.x) + (transform.TransformDirection(Vector3.right) * _currentInput.y);
             _moveDirection.y = moveDirectionY;
+            
         }
 
         private void HandleMouseLook()
@@ -240,11 +250,11 @@ namespace PlayerMovement
 
             if (Mathf.Abs(_moveDirection.x) > 0.1f || Mathf.Abs(_moveDirection.z) > 0.1f)
             {
-                _timer += Time.deltaTime * (_isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
+                _timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
                 _playerCamera.transform.localPosition = new Vector3(
                     _playerCamera.transform.localPosition.x,
                     _defaultYpos + Mathf.Sin(_timer) *
-                    (_isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
+                    (isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
                     _playerCamera.transform.localPosition.z);
             }
         }
@@ -258,7 +268,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-
+                crossHair.SetActive(true);
                 _zoomRoutine = StartCoroutine(ToggleZoom(true));
             }
             if (Input.GetKeyUp(zoomKey))
@@ -268,7 +278,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-
+                crossHair.SetActive(false);
                 _zoomRoutine = StartCoroutine(ToggleZoom(false));
             }
         }
@@ -315,6 +325,7 @@ namespace PlayerMovement
                     switch (hit.collider.tag)
                     {
                         case "Footsteps/stone":
+                            print("stone");
                             footstepAudioSource.PlayOneShot(stoneClips[Random.Range(0, stoneClips.Length-1)]);
                             break;
                         case "Footsteps/grass":
@@ -345,16 +356,16 @@ namespace PlayerMovement
         {
             footstepAudioSource.PlayOneShot(onHit);
             footstepAudioSource.PlayOneShot(onDamage);
+            StartCoroutine(FlashLightBlinking());
+            canRegenerate = false;
             
             _currentHealth -= damage;
             OnDamage?.Invoke(_currentHealth);
             
             if(_currentHealth <= 0)
                 KillPlayer();
-            // else if(_healthRegeneration != null)
-            //     StopCoroutine(_healthRegeneration);
             
-            StartCoroutine(FlashLightBlinking());
+            
             
             StartCoroutine(RegenerateHealth());
         }
@@ -366,20 +377,59 @@ namespace PlayerMovement
                 StopCoroutine(RegenerateHealth());
             print("DEAD");
         }
+        private void PlayRegenEffects()
+        {
+            if (_currentHealth != 0) 
+                _postProcessVolume.weight = (maxHealth - _currentHealth) / 100;
+            _heartbeatTimer -= Time.deltaTime;
+            if (_heartbeatTimer <= 0)
+            {
+                footstepAudioSource.PlayOneShot(heartbeat);
+                _heartbeatTimer = heartbeatOffset;
+            }
+            HardBreathing();
+        }
+        private void HandleFlashLight()
+        {
+            if (ToggleFlashLight && flashLightOn)
+            {
+                footstepAudioSource.PlayOneShot(flashLight[1]);
+                _flashLight.intensity = 0;
+                flashLightOn = false;
+            }
+            else if (ToggleFlashLight && !flashLightOn)
+            {
+                footstepAudioSource.PlayOneShot(flashLight[0]);
+                _flashLight.intensity = _flashLightIntensity;
+                flashLightOn = true;
+
+                
+            }
+        }
+
+        private void HardBreathing()
+        {
+            _breathTimer -= Time.deltaTime;
+            if (_breathTimer <= 0)
+            {
+                footstepAudioSource.PlayOneShot(breathing);
+                _breathTimer = breathing.length;
+            }
+        }
 
         
         //--------------- Coroutines
         private IEnumerator CrouchStand()
         {
-            if(_isCrouching && Physics.Raycast(_playerCamera.transform.position,Vector3.up,1.0f))
+            if(isCrouching && Physics.Raycast(_playerCamera.transform.position,Vector3.up,1.0f))
                 yield break;
         
             _duringCrouchAnimation = true;
             
             float timeElapsed = 0;
-            float targetHeight = _isCrouching ? standingHeight : crouchingHeight;
+            float targetHeight = isCrouching ? standingHeight : crouchingHeight;
             float currentHeight = _characterController.height;
-            Vector3 targetCenter = _isCrouching ?  standingCenter : crouchingCenter;
+            Vector3 targetCenter = isCrouching ?  standingCenter : crouchingCenter;
             Vector3 currentCenter = _characterController.center;
 
             while (timeElapsed < timeToCrouch)
@@ -392,7 +442,7 @@ namespace PlayerMovement
 
             _characterController.height = targetHeight;
             _characterController.center = targetCenter;
-            _isCrouching = !_isCrouching;
+            isCrouching = !isCrouching;
         
             _duringCrouchAnimation = false;
         }
@@ -414,63 +464,48 @@ namespace PlayerMovement
         }
         private IEnumerator RegenerateHealth()
         {
+            canSprint = false;
             yield return new WaitForSeconds(timeBeforeRegeneration);
-            
-            WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-            while (_currentHealth < maxHealth)
+            canRegenerate = true;
+            if (canRegenerate)
             {
-                _currentHealth += healthValueIncrement;
-                
-                if (_currentHealth > maxHealth)
-                    _currentHealth = maxHealth;
-                OnHeal?.Invoke(_currentHealth);
+                WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-                yield return timeToWait;
+                while (_currentHealth < maxHealth && canRegenerate)
+                {
+                    _currentHealth += healthValueIncrement;
+                    
+                    if (_currentHealth > maxHealth)
+                        _currentHealth = maxHealth;
+                    OnHeal?.Invoke(_currentHealth);
+
+                    yield return timeToWait;
+                }
+
+                if (Math.Abs(_currentHealth - maxHealth) < 0.1f)
+                    canSprint = true;
+                _healthRegeneration = null;
+                
             }
-            _healthRegeneration = null;
         }
 
         private IEnumerator FlashLightBlinking()
         {
             if (flashLightOn)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 7; i++)
                 {
-                _flashLight.enabled = false;
-                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
-                
-                _flashLight.enabled = true;
-                yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    _flashLight.enabled = false;
+                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
+                    
+                    _flashLight.enabled = true;
+                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
                     
                 }
             }
         }
 
-        private void PlayRegenEffects()
-        {
-            
-            if (_currentHealth != 0) 
-                _postProcessVolume.weight = (maxHealth - _currentHealth) / 100;
-            _heartbeatTimer -= Time.deltaTime;
-            if (_heartbeatTimer <= 0)
-            {
-                footstepAudioSource.PlayOneShot(heartbeat);
-                _heartbeatTimer = heartbeatOffset;
-            }
-        }
-        private void HandleFlashLight()
-        {
-            if (ToggleFlashLight && flashLightOn)
-            {
-                _flashLight.intensity = 0;
-                flashLightOn = false;
-            }
-            else if (ToggleFlashLight && !flashLightOn)
-            {
-                _flashLight.intensity = _flashLightIntensity;
-                flashLightOn = true;
-            }
-        }
+
     }
 }

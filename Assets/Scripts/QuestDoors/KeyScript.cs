@@ -26,11 +26,9 @@ public class KeyScript : Interactable
 
     public override void OnFocus()
     {
-        Cursor.visible = true;
     }
 
     public override void OnLoseFocus()
     {
-        Cursor.visible = false;
     }
 }
