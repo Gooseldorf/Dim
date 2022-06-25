@@ -15,6 +15,7 @@ TagManager:
   - QuestDoor/QuestDoor2
   - QuestDoor/QuestDoor3
   - Enemy
+  - WalkPoint
   layers:
   - Default
   - TransparentFX

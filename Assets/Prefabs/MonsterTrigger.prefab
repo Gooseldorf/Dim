@@ -113,4 +113,7 @@ MonoBehaviour:
   enemy: {fileID: 3120223567051647114, guid: 3c271301e75080b46995c123f10ba8fb, type: 3}
   spawner: {fileID: 0}
   canTrigger: 1
-  spawnChance: 50
+  spawnChance: 100
+  flashLightOffMultiplier: 0.5
+  walkMultiplier: 0.7
+  crouchMultiplier: 0.5

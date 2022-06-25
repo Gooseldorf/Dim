@@ -1,17 +1,16 @@
 using System;
 using System.Collections;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
-using PostProcessAttribute = UnityEngine.Rendering.PostProcessing.PostProcessAttribute;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace PlayerMovement
 {
     public class FirstPersonController : MonoBehaviour
     {
-        public bool CanMove { get; private set; } = true;
-        private bool IsSprinting => canSprint && Input.GetKey(sprintKey);
+        public bool CanMove { get; private set; } = true; 
+        public bool IsSprinting => canSprint && Input.GetKey(sprintKey);
         private bool ShouldJump => Input.GetKeyDown(jumpKey) && _characterController.isGrounded && !IsSliding;
         private bool ShouldCrouch => Input.GetKeyDown(crouchKey) &&_characterController.isGrounded && !_duringCrouchAnimation;
         private bool ToggleFlashLight => Input.GetKeyDown(flashLightKey);
@@ -75,7 +74,7 @@ namespace PlayerMovement
         [SerializeField] private float timeToCrouch = 0.25f;
         [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);
         [SerializeField] private Vector3 standingCenter = new Vector3(0, 0, 0);
-        private bool _isCrouching;
+        public bool isCrouching;
         private bool _duringCrouchAnimation;
 
         [Header("Headbob")] 
@@ -108,7 +107,7 @@ namespace PlayerMovement
         [SerializeField] private AudioClip[] grassClips = default;
         [SerializeField] private AudioClip[] stoneClips = default;
         private float _footstepTimer = 0;
-        private float GetCurrentOffset => _isCrouching ? baseStepSpeed * crouchStepMultiplier :
+        private float GetCurrentOffset => isCrouching ? baseStepSpeed * crouchStepMultiplier :
             IsSprinting ? baseStepSpeed * sprintStepMultiplier : baseStepSpeed;
 
         [Header("Audio")] 
@@ -125,10 +124,14 @@ namespace PlayerMovement
         private PostProcessVolume _postProcessVolume;
         
         //Flashlight
+        public bool canUseFlashlight = true;
         private Light _flashLight;
         private float _flashLightIntensity;
-        private bool _flashLightOn = true;
-        private float maxBlinkingSpeed = 0.1f;
+        public bool flashLightOn = true;
+        private float _maxBlinkingSpeed = 0.1f;
+        
+        //UI
+        private GameObject crossHair;
         
         
         //SLIDING
@@ -172,6 +175,8 @@ namespace PlayerMovement
             _postProcessVolume = _playerCamera.GetComponent<PostProcessVolume>();
             _flashLight = GetComponentInChildren<Light>();
             _flashLightIntensity = _flashLight.intensity;
+            crossHair = GameObject.Find("CrossHair");
+            crossHair.SetActive(false);
         }
         
         void Update()
@@ -197,7 +202,8 @@ namespace PlayerMovement
                     HandleInteractionCheck();
                     HandleInteractionInput();
                 }
-                HandleFlashLight();
+                if(canUseFlashlight)
+                    HandleFlashLight();
                 
                     
                 ApplyFinalMovements();
@@ -208,7 +214,7 @@ namespace PlayerMovement
 
         private void HandleMoveInput()
         {
-            _currentInput = new Vector2((_isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (_isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
+            _currentInput = new Vector2((isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
 
             float moveDirectionY = _moveDirection.y;
             _moveDirection = (transform.TransformDirection(Vector3.forward) * _currentInput.x) + (transform.TransformDirection(Vector3.right) * _currentInput.y);
@@ -244,11 +250,11 @@ namespace PlayerMovement
 
             if (Mathf.Abs(_moveDirection.x) > 0.1f || Mathf.Abs(_moveDirection.z) > 0.1f)
             {
-                _timer += Time.deltaTime * (_isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
+                _timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
                 _playerCamera.transform.localPosition = new Vector3(
                     _playerCamera.transform.localPosition.x,
                     _defaultYpos + Mathf.Sin(_timer) *
-                    (_isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
+                    (isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
                     _playerCamera.transform.localPosition.z);
             }
         }
@@ -262,7 +268,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-
+                crossHair.SetActive(true);
                 _zoomRoutine = StartCoroutine(ToggleZoom(true));
             }
             if (Input.GetKeyUp(zoomKey))
@@ -272,7 +278,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-
+                crossHair.SetActive(false);
                 _zoomRoutine = StartCoroutine(ToggleZoom(false));
             }
         }
@@ -385,17 +391,17 @@ namespace PlayerMovement
         }
         private void HandleFlashLight()
         {
-            if (ToggleFlashLight && _flashLightOn)
+            if (ToggleFlashLight && flashLightOn)
             {
                 footstepAudioSource.PlayOneShot(flashLight[1]);
                 _flashLight.intensity = 0;
-                _flashLightOn = false;
+                flashLightOn = false;
             }
-            else if (ToggleFlashLight && !_flashLightOn)
+            else if (ToggleFlashLight && !flashLightOn)
             {
                 footstepAudioSource.PlayOneShot(flashLight[0]);
                 _flashLight.intensity = _flashLightIntensity;
-                _flashLightOn = true;
+                flashLightOn = true;
 
                 
             }
@@ -415,15 +421,15 @@ namespace PlayerMovement
         //--------------- Coroutines
         private IEnumerator CrouchStand()
         {
-            if(_isCrouching && Physics.Raycast(_playerCamera.transform.position,Vector3.up,1.0f))
+            if(isCrouching && Physics.Raycast(_playerCamera.transform.position,Vector3.up,1.0f))
                 yield break;
         
             _duringCrouchAnimation = true;
             
             float timeElapsed = 0;
-            float targetHeight = _isCrouching ? standingHeight : crouchingHeight;
+            float targetHeight = isCrouching ? standingHeight : crouchingHeight;
             float currentHeight = _characterController.height;
-            Vector3 targetCenter = _isCrouching ?  standingCenter : crouchingCenter;
+            Vector3 targetCenter = isCrouching ?  standingCenter : crouchingCenter;
             Vector3 currentCenter = _characterController.center;
 
             while (timeElapsed < timeToCrouch)
@@ -436,7 +442,7 @@ namespace PlayerMovement
 
             _characterController.height = targetHeight;
             _characterController.center = targetCenter;
-            _isCrouching = !_isCrouching;
+            isCrouching = !isCrouching;
         
             _duringCrouchAnimation = false;
         }
@@ -486,15 +492,15 @@ namespace PlayerMovement
 
         private IEnumerator FlashLightBlinking()
         {
-            if (_flashLightOn)
+            if (flashLightOn)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 7; i++)
                 {
                     _flashLight.enabled = false;
-                    yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
                     
                     _flashLight.enabled = true;
-                    yield return new WaitForSeconds(Random.Range(0,maxBlinkingSpeed));
+                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
                     
                 }
             }

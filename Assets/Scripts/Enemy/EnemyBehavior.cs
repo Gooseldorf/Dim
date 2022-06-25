@@ -11,7 +11,7 @@ public class EnemyBehavior : MonoBehaviour
     private NavMeshAgent _agent;
     private Transform _player;
     [SerializeField] private LayerMask isGround, isPlayer;
-    [SerializeField] private List<Transform> placesToHide;
+    [SerializeField] private GameObject[] placesToHide;
     
     //Patrolling
     public Vector3 walkPoint;
@@ -58,6 +58,8 @@ public class EnemyBehavior : MonoBehaviour
         _player = GameObject.FindGameObjectWithTag("Player").transform;
         _agent = GetComponent<NavMeshAgent>();
         sightRange = 30;
+        placesToHide = GameObject.FindGameObjectsWithTag("WalkPoint");
+        
         
         enemyAnimation = gameObject.GetComponent<Animation>();
         enemyAnimation.clip = enemyAnimation.GetClip("Idle");
@@ -154,10 +156,6 @@ public class EnemyBehavior : MonoBehaviour
         if (health < 0)
             Invoke(nameof(DestroyEnemy),0.5f);
     }
-    private void DeactivateEnemy()
-    {
-        gameObject.SetActive(false);
-    }
     private void DestroyEnemy()
     {
         Destroy(gameObject);
@@ -170,7 +168,7 @@ public class EnemyBehavior : MonoBehaviour
         sightRange = 0;
         Vector3 closestWaypoint = FindClosestWayPoint();
         _agent.SetDestination(closestWaypoint);
-        Invoke(nameof(DeactivateEnemy),5f);
+        Invoke(nameof(DestroyEnemy),9f);
     }
     Vector3 FindClosestWayPoint()
     {
@@ -178,16 +176,15 @@ public class EnemyBehavior : MonoBehaviour
         float minDistance = Single.MaxValue;
         foreach (var waypoint in placesToHide)
         {
-            if (Vector3.Distance(transform.position, waypoint.position) < minDistance)
+            if (Vector3.Distance(transform.position, waypoint.transform.position) < minDistance)
             {
-                closestWayPoint = waypoint.position;
-                minDistance = Vector3.Distance(transform.position, waypoint.position);
+                closestWayPoint = waypoint.transform.position;
+                minDistance = Vector3.Distance(transform.position, waypoint.transform.position);
             }
         }
         return closestWayPoint;
     }
 
-    
     
     private void OnDrawGizmosSelected()
         {
