@@ -41,7 +41,7 @@ namespace PlayerMovement
         [SerializeField] private float healthTimeIncrement = 0.1f;
         private float _currentHealth;
         private Coroutine _healthRegeneration;
-        private bool canRegenerate;
+        private bool _canRegenerate;
         public static Action<float> OnTakeDamage;
         public static Action<float> OnDamage;
         public static Action<float> OnHeal;
@@ -126,12 +126,11 @@ namespace PlayerMovement
         //Flashlight
         public bool canUseFlashlight = true;
         private Light _flashLight;
-        private float _flashLightIntensity;
-        public bool flashLightOn = true;
+        public bool flashLightOn;
         private float _maxBlinkingSpeed = 0.1f;
         
         //UI
-        private GameObject crossHair;
+        private GameObject _crossHair;
         
         
         //SLIDING
@@ -174,11 +173,17 @@ namespace PlayerMovement
             _currentHealth = maxHealth;
             _postProcessVolume = _playerCamera.GetComponent<PostProcessVolume>();
             _flashLight = GetComponentInChildren<Light>();
-            _flashLightIntensity = _flashLight.intensity;
-            crossHair = GameObject.Find("CrossHair");
-            crossHair.SetActive(false);
+            _flashLight.enabled = false;
+            flashLightOn = false;
+            _crossHair = GameObject.Find("CrossHair");
+            _crossHair.SetActive(false);
         }
-        
+
+        private void Start()
+        {
+            StartCoroutine(FlashLightBlinking());
+        }
+
         void Update()
         {
             if (CanMove)
@@ -205,7 +210,6 @@ namespace PlayerMovement
                 if(canUseFlashlight)
                     HandleFlashLight();
                 
-                    
                 ApplyFinalMovements();
             }
         }
@@ -268,7 +272,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-                crossHair.SetActive(true);
+                _crossHair.SetActive(true);
                 _zoomRoutine = StartCoroutine(ToggleZoom(true));
             }
             if (Input.GetKeyUp(zoomKey))
@@ -278,7 +282,7 @@ namespace PlayerMovement
                     StopCoroutine(_zoomRoutine);
                     _zoomRoutine = null;
                 }
-                crossHair.SetActive(false);
+                _crossHair.SetActive(false);
                 _zoomRoutine = StartCoroutine(ToggleZoom(false));
             }
         }
@@ -356,8 +360,9 @@ namespace PlayerMovement
         {
             footstepAudioSource.PlayOneShot(onHit);
             footstepAudioSource.PlayOneShot(onDamage);
-            StartCoroutine(FlashLightBlinking());
-            canRegenerate = false;
+            if(flashLightOn)
+                StartCoroutine(FlashLightBlinking());
+            _canRegenerate = false;
             
             _currentHealth -= damage;
             OnDamage?.Invoke(_currentHealth);
@@ -365,11 +370,8 @@ namespace PlayerMovement
             if(_currentHealth <= 0)
                 KillPlayer();
             
-            
-            
             StartCoroutine(RegenerateHealth());
         }
-        
         private void KillPlayer()
         {
             _currentHealth = 0;
@@ -394,19 +396,18 @@ namespace PlayerMovement
             if (ToggleFlashLight && flashLightOn)
             {
                 footstepAudioSource.PlayOneShot(flashLight[1]);
-                _flashLight.intensity = 0;
+                _flashLight.enabled = false;
                 flashLightOn = false;
             }
             else if (ToggleFlashLight && !flashLightOn)
             {
                 footstepAudioSource.PlayOneShot(flashLight[0]);
-                _flashLight.intensity = _flashLightIntensity;
+                _flashLight.enabled = true;
                 flashLightOn = true;
 
                 
             }
         }
-
         private void HardBreathing()
         {
             _breathTimer -= Time.deltaTime;
@@ -416,8 +417,8 @@ namespace PlayerMovement
                 _breathTimer = breathing.length;
             }
         }
-
         
+
         //--------------- Coroutines
         private IEnumerator CrouchStand()
         {
@@ -467,12 +468,12 @@ namespace PlayerMovement
             canSprint = false;
             yield return new WaitForSeconds(timeBeforeRegeneration);
 
-            canRegenerate = true;
-            if (canRegenerate)
+            _canRegenerate = true;
+            if (_canRegenerate)
             {
                 WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-                while (_currentHealth < maxHealth && canRegenerate)
+                while (_currentHealth < maxHealth && _canRegenerate)
                 {
                     _currentHealth += healthValueIncrement;
                     
@@ -489,23 +490,17 @@ namespace PlayerMovement
                 
             }
         }
-
         private IEnumerator FlashLightBlinking()
         {
-            if (flashLightOn)
+            for (int i = 0; i < 7; i++)
             {
-                for (int i = 0; i < 7; i++)
-                {
-                    _flashLight.enabled = false;
-                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
-                    
-                    _flashLight.enabled = true;
-                    yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
-                    
-                }
+                _flashLight.enabled = false;
+                yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
+                
+                _flashLight.enabled = true;
+                yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
             }
+            _flashLight.enabled = false;
         }
-
-
     }
 }

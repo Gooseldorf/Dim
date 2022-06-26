@@ -26,7 +26,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 592195981580114603}
   m_LocalRotation: {x: -1.13686824e-13, y: 0.00000023841855, z: -8.526512e-14, w: 1}
-  m_LocalPosition: {x: -0.8001001, y: -0.033231914, z: -0.013388197}
+  m_LocalPosition: {x: -0.8016, y: -0.033231895, z: 0.0048}
   m_LocalScale: {x: 1.0000001, y: 1, z: 1.0000001}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -231,7 +231,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 592195982752095429}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.71058464, y: -0.041152, z: 0.077999115}
+  m_LocalPosition: {x: 0.726, y: -0.041152, z: -0.04}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2801,7 +2801,9 @@ PrefabInstance:
       propertyPath: door
       value: 
       objectReference: {fileID: 592195982752095434}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 758874383439741708, guid: 9f9bcf0055c4a5b42b45da3c9d5851fc, type: 3}
+    - {fileID: 758874383439741699, guid: 9f9bcf0055c4a5b42b45da3c9d5851fc, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 9f9bcf0055c4a5b42b45da3c9d5851fc, type: 3}
 --- !u!4 &198148628762254077 stripped
 Transform:
