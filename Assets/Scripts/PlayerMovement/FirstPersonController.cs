@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -45,6 +46,7 @@ namespace PlayerMovement
         public static Action<float> OnTakeDamage;
         public static Action<float> OnDamage;
         public static Action<float> OnHeal;
+        private bool _isDead;
         
         [Header("Moving")] 
         [SerializeField] private float walkSpeed = 3.0f;
@@ -115,6 +117,7 @@ namespace PlayerMovement
         [SerializeField] private AudioClip onHit;
         [SerializeField] private AudioClip heartbeat;
         [SerializeField] private AudioClip breathing;
+        [SerializeField] private AudioClip deathScream;
         [SerializeField] private AudioClip[] flashLight = default;
         [SerializeField] private float heartbeatOffset = 0.7f;
         private float _heartbeatTimer = 0;
@@ -131,6 +134,7 @@ namespace PlayerMovement
         
         //UI
         private GameObject _crossHair;
+        private GameObject _levelManager;
         
         
         //SLIDING
@@ -150,8 +154,7 @@ namespace PlayerMovement
                 }
             }
         }
-
-
+        
         private void OnEnable()
         {
             OnTakeDamage += ApplyDamage;
@@ -177,6 +180,7 @@ namespace PlayerMovement
             flashLightOn = false;
             _crossHair = GameObject.Find("CrossHair");
             _crossHair.SetActive(false);
+            _levelManager = GameObject.Find("LevelManager");
         }
 
         private void Start()
@@ -301,6 +305,7 @@ namespace PlayerMovement
             }
             else if (_currentInteractable)
             {
+                
                 _currentInteractable.OnLoseFocus();
                 _currentInteractable = null;
             }
@@ -329,7 +334,6 @@ namespace PlayerMovement
                     switch (hit.collider.tag)
                     {
                         case "Footsteps/stone":
-                            print("stone");
                             footstepAudioSource.PlayOneShot(stoneClips[Random.Range(0, stoneClips.Length-1)]);
                             break;
                         case "Footsteps/grass":
@@ -359,25 +363,30 @@ namespace PlayerMovement
         private void ApplyDamage(float damage)
         {
             footstepAudioSource.PlayOneShot(onHit);
-            footstepAudioSource.PlayOneShot(onDamage);
-            if(flashLightOn)
-                StartCoroutine(FlashLightBlinking());
-            _canRegenerate = false;
-            
-            _currentHealth -= damage;
-            OnDamage?.Invoke(_currentHealth);
-            
-            if(_currentHealth <= 0)
-                KillPlayer();
-            
-            StartCoroutine(RegenerateHealth());
+            if (!_isDead)
+            {
+                footstepAudioSource.PlayOneShot(onDamage);
+                if(flashLightOn)
+                    StartCoroutine(FlashLightBlinking());
+                _canRegenerate = false;
+                
+                _currentHealth -= damage;
+                OnDamage?.Invoke(_currentHealth);
+                
+                if(_currentHealth <= 0)
+                    KillPlayer();
+                StartCoroutine(RegenerateHealth());
+            }
         }
         private void KillPlayer()
         {
+            _isDead = true;
+            CanMove = false;
+            EventManager.SafeSpaceTrigger();
+            footstepAudioSource.PlayOneShot(deathScream,1.5f);
             _currentHealth = 0;
-            if (_healthRegeneration != null)
-                StopCoroutine(RegenerateHealth());
-            print("DEAD");
+            StartCoroutine(PlayerDeath());
+         
         }
         private void PlayRegenEffects()
         {
@@ -404,8 +413,6 @@ namespace PlayerMovement
                 footstepAudioSource.PlayOneShot(flashLight[0]);
                 _flashLight.enabled = true;
                 flashLightOn = true;
-
-                
             }
         }
         private void HardBreathing()
@@ -465,29 +472,30 @@ namespace PlayerMovement
         }
         private IEnumerator RegenerateHealth()
         {
-            canSprint = false;
-            yield return new WaitForSeconds(timeBeforeRegeneration);
+                canSprint = false;
+                yield return new WaitForSeconds(timeBeforeRegeneration);
 
-            _canRegenerate = true;
-            if (_canRegenerate)
+            if (!_isDead)
             {
-                WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
-
-                while (_currentHealth < maxHealth && _canRegenerate)
+                _canRegenerate = true;
+                if (_canRegenerate)
                 {
-                    _currentHealth += healthValueIncrement;
-                    
-                    if (_currentHealth > maxHealth)
-                        _currentHealth = maxHealth;
-                    OnHeal?.Invoke(_currentHealth);
+                    WaitForSeconds timeToWait = new WaitForSeconds(healthTimeIncrement);
 
-                    yield return timeToWait;
+                    while (_currentHealth < maxHealth && _canRegenerate)
+                    {
+                        _currentHealth += healthValueIncrement;
+                        
+                        if (_currentHealth > maxHealth)
+                            _currentHealth = maxHealth;
+                        OnHeal?.Invoke(_currentHealth);
+
+                        yield return timeToWait;
+                    }
+                    if (Math.Abs(_currentHealth - maxHealth) < 0.1f)
+                        canSprint = true;
+                    _healthRegeneration = null;
                 }
-
-                if (Math.Abs(_currentHealth - maxHealth) < 0.1f)
-                    canSprint = true;
-                _healthRegeneration = null;
-                
             }
         }
         private IEnumerator FlashLightBlinking()
@@ -501,6 +509,19 @@ namespace PlayerMovement
                 yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
             }
             _flashLight.enabled = false;
+        }
+        private IEnumerator PlayerDeath()
+        {
+            _postProcessVolume.weight = 1;
+            _playerCamera.transform.localPosition = new Vector3(_playerCamera.transform.localPosition.x,-0.9f,_playerCamera.transform.localPosition.z);
+            _playerCamera.transform.localRotation = Quaternion.Euler(-7,0,90);
+            yield return new WaitForSeconds(2f);
+            _flashLight.enabled = true;
+            yield return new WaitForSeconds(4f);
+            footstepAudioSource.PlayOneShot(flashLight[1]);
+            _flashLight.enabled = false;
+            GameObject.Destroy(_levelManager);
+            SceneManager.LoadScene("MainMenu");
         }
     }
 }

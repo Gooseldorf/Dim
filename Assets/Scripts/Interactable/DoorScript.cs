@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -7,7 +9,6 @@ public class DoorScript : Interactable
     private NavMeshObstacle _obstacle;
     public bool isOpen = false;
     public bool isLocked = false;
-    public bool isOnFocus;
     [SerializeField] private bool isRotatingDoor = true;
     [SerializeField] private float speed = 1f;
 
@@ -18,9 +19,7 @@ public class DoorScript : Interactable
     private Coroutine _animationCoroutine;
 
     [SerializeField] private AudioClip[] doorSounds;
-    private AudioSource doorAudioSource;
-    
-
+    private AudioSource _doorAudioSource;
     
     private void Awake()
     {
@@ -32,7 +31,7 @@ public class DoorScript : Interactable
         _startRotation1 = transform.rotation.eulerAngles;
         _closedPosition = transform.rotation;
         _openedPosition = Quaternion.Euler(0, _startRotation1.y + 90,0);
-        doorAudioSource = GetComponent<AudioSource>();
+        _doorAudioSource = GetComponent<AudioSource>();
     }
 
     public void Open()
@@ -41,13 +40,13 @@ public class DoorScript : Interactable
         {
             if (CheckKey())
             {
-                doorAudioSource.PlayOneShot(doorSounds[3]);
+                _doorAudioSource.PlayOneShot(doorSounds[3]);
                 isLocked = false;
             }
             else
             {
                 print("locked");
-                doorAudioSource.PlayOneShot(doorSounds[2]);
+                _doorAudioSource.PlayOneShot(doorSounds[2]);
             }
         }
         if (!isOpen && !isLocked)
@@ -69,7 +68,7 @@ public class DoorScript : Interactable
 
     private IEnumerator DoRotationOpen()
     {
-        doorAudioSource.PlayOneShot(doorSounds[0]);
+        _doorAudioSource.PlayOneShot(doorSounds[0]);
         isOpen = true;
         float time = 0;
         while (_closedPosition != _openedPosition)
@@ -82,7 +81,7 @@ public class DoorScript : Interactable
 
     public void Close()
     {
-        doorAudioSource.PlayOneShot(doorSounds[1]);
+        _doorAudioSource.PlayOneShot(doorSounds[1]);
         if (isOpen)
         {
             if (_animationCoroutine != null)
@@ -144,10 +143,11 @@ public class DoorScript : Interactable
 
     public override void OnFocus()
     {
-        isOnFocus = true;
     }
+    
     public override void OnLoseFocus()
     {
-        isOnFocus = false;
     }
+
+  
 }
