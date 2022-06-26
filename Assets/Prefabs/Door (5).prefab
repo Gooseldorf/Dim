@@ -2630,7 +2630,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isOpen: 0
   isLocked: 0
-  isOnFocus: 0
   isRotatingDoor: 1
   speed: 1
   doorSounds:

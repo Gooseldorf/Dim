@@ -27,7 +27,6 @@ public class KeyScript : Interactable
     public override void OnFocus()
     {
     }
-
     public override void OnLoseFocus()
     {
     }
