@@ -10,7 +10,8 @@ namespace PlayerMovement
 {
     public class FirstPersonController : MonoBehaviour
     {
-        public bool CanMove { get; private set; } = true; 
+        public bool CanMove { get;  set; } = true;
+        public bool IsZooming { get; private set; } = false;
         public bool IsSprinting => canSprint && Input.GetKey(sprintKey);
         private bool ShouldJump => Input.GetKeyDown(jumpKey) && _characterController.isGrounded && !IsSliding;
         private bool ShouldCrouch => Input.GetKeyDown(crouchKey) &&_characterController.isGrounded && !_duringCrouchAnimation;
@@ -118,6 +119,7 @@ namespace PlayerMovement
         [SerializeField] private AudioClip heartbeat;
         [SerializeField] private AudioClip breathing;
         [SerializeField] private AudioClip deathScream;
+        [SerializeField] private AudioClip reloadGunAudio;
         [SerializeField] private AudioClip[] flashLight = default;
         [SerializeField] private float heartbeatOffset = 0.7f;
         private float _heartbeatTimer = 0;
@@ -135,6 +137,7 @@ namespace PlayerMovement
         //UI
         private GameObject _crossHair;
         private GameObject _levelManager;
+        [SerializeField] private UI UI;
         
         
         //SLIDING
@@ -158,11 +161,14 @@ namespace PlayerMovement
         private void OnEnable()
         {
             OnTakeDamage += ApplyDamage;
+            KeyPad.LevelCompleted += CompleteLevel;
         }
 
         private void OnDisable()
         {
             OnTakeDamage -= ApplyDamage;
+            KeyPad.LevelCompleted -= CompleteLevel;
+
         }
 
         void Awake()
@@ -278,6 +284,7 @@ namespace PlayerMovement
                 }
                 _crossHair.SetActive(true);
                 _zoomRoutine = StartCoroutine(ToggleZoom(true));
+                IsZooming = true;
             }
             if (Input.GetKeyUp(zoomKey))
             {
@@ -288,6 +295,7 @@ namespace PlayerMovement
                 }
                 _crossHair.SetActive(false);
                 _zoomRoutine = StartCoroutine(ToggleZoom(false));
+                IsZooming = false;
             }
         }
         
@@ -424,7 +432,11 @@ namespace PlayerMovement
                 _breathTimer = breathing.length;
             }
         }
-        
+
+        private void CompleteLevel()
+        {
+            StartCoroutine(CompleteLevelCoroutine());
+        }
 
         //--------------- Coroutines
         private IEnumerator CrouchStand()
@@ -522,6 +534,16 @@ namespace PlayerMovement
             _flashLight.enabled = false;
             GameObject.Destroy(_levelManager);
             SceneManager.LoadScene("MainMenu");
+        }
+
+        private IEnumerator CompleteLevelCoroutine()
+        {
+            CanMove = false;
+            UI.HideKeyPad();
+            yield return new WaitForSeconds(1f);
+            _flashLight.enabled = false;
+            footstepAudioSource.PlayOneShot(reloadGunAudio,2f);
+            
         }
     }
 }

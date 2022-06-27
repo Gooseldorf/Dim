@@ -45,7 +45,6 @@ public class DoorScript : Interactable
             }
             else
             {
-                print("locked");
                 _doorAudioSource.PlayOneShot(doorSounds[2]);
             }
         }
