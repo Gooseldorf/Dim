@@ -191,6 +191,9 @@ namespace PlayerMovement
 
         private void Start()
         {
+            CanMove = false;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             StartCoroutine(FlashLightBlinking());
         }
 

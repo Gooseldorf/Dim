@@ -2,6 +2,7 @@ using System;
 using PlayerMovement;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UI : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI interactionText = default;
     [SerializeField] private TextMeshProUGUI lorePaperText = default;
     [SerializeField] private GameObject keypad = default;
+    [SerializeField] private Image spawnChanceImage;
     
 
     private void OnEnable()
@@ -18,6 +20,7 @@ public class UI : MonoBehaviour
         LorePaperScript.Reading += UpdateLorePaperText;
         KeyScript.KeyOnFocus += UpdateInteractionText;
         KeyPad.KeyPadInteracted += ShowKeyPad;
+        Trigger.SpawnChanceUpdate += UpdateSpawnChance;
     }
 
     private void OnDisable()
@@ -27,8 +30,10 @@ public class UI : MonoBehaviour
         LorePaperScript.Reading -= UpdateLorePaperText;
         KeyScript.KeyOnFocus -= UpdateInteractionText;
         KeyPad.KeyPadInteracted -= ShowKeyPad;
-    }
+        Trigger.SpawnChanceUpdate -= UpdateSpawnChance;
 
+    }
+    
     private void Start()
     {
         UpdateHealthText(100);
@@ -57,5 +62,10 @@ public class UI : MonoBehaviour
         keypad.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    private void UpdateSpawnChance(float spawnChance)
+    {
+        spawnChanceImage.fillAmount = spawnChance / 100;
     }
 }

@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using PlayerMovement;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Trigger : MonoBehaviour
@@ -16,9 +18,11 @@ public class Trigger : MonoBehaviour
     [SerializeField] [Range(0f, 1f)] private float flashLightOffMultiplier;
     [SerializeField] [Range(0f, 1f)] private float walkMultiplier;
     [SerializeField] [Range(0f, 1f)] private float crouchMultiplier;
+    public static Action<float> SpawnChanceUpdate;
+
     private Collider _player;
     private FirstPersonController _playerScript;
-    private float _finalSpawnChance;
+    [FormerlySerializedAs("_finalSpawnChance")] public float finalSpawnChance;
     private float _speedMultiplier;
 
     private void Awake()
@@ -31,27 +35,16 @@ public class Trigger : MonoBehaviour
     {
         _speedMultiplier = _playerScript.IsSprinting ? 1f : _playerScript.isCrouching ? crouchMultiplier : walkMultiplier;
         if (_playerScript.flashLightOn)
-            _finalSpawnChance = _speedMultiplier * spawnChance;
+            finalSpawnChance = _speedMultiplier * spawnChance;
         else if (!_playerScript.flashLightOn)
-            _finalSpawnChance = _speedMultiplier * flashLightOffMultiplier * spawnChance;
+            finalSpawnChance = _speedMultiplier * flashLightOffMultiplier * spawnChance;
+        SpawnChanceUpdate?.Invoke(finalSpawnChance);
     }
-
-    private void OnEnable()
-    {
-        //EventManager.OnMonsterTrigger += SetInactive;
-        //EventManager.OnSafeSpaceTrigger += SetActive;
-    }
-    private void OnDisable()
-    {
-        //EventManager.OnMonsterTrigger -= SetInactive;
-        //EventManager.OnSafeSpaceTrigger -= SetActive;
-    }
-    
     private void OnTriggerEnter(Collider other)
     {
         if (canTrigger && other == _player)
         {
-            if (Random.value < _finalSpawnChance / 100f)
+            if (Random.value < finalSpawnChance / 100f)
             {
                 enemy.SetActive(true);
                 Instantiate(enemy, spawner.transform.position, spawner.transform.rotation);
