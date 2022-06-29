@@ -32,6 +32,7 @@ public class EnemyBehavior : MonoBehaviour
     //Audio
     [SerializeField] private AudioClip[] ghoulActionSounds;
     [SerializeField] private AudioClip[] ghoulFootstepSounds;
+    [SerializeField] private AudioClip[] ghoulDamageSounds;
     private AudioSource _ghoulAudioSource;
     [SerializeField] private float footstepOffset = 0.5f;
     private float _footstepTimer = 0;
@@ -150,11 +151,18 @@ public class EnemyBehavior : MonoBehaviour
     {
         _isAttacking = false;
     }
-    public void TakeDamage(int damage)
+    public void TakeDamage(float damage)
     {
         health -= damage;
+        _ghoulAudioSource.PlayOneShot(ghoulDamageSounds[Random.Range(0, ghoulDamageSounds.Length - 1)],2);
+        
         if (health < 0)
-            Invoke(nameof(DestroyEnemy),0.5f);
+        {
+            sightRange = 0;
+            enemyAnimation.clip = enemyAnimation.GetClip("Death");
+            enemyAnimation.Play();
+            Invoke(nameof(DestroyEnemy),enemyAnimation.clip.length);
+        }
     }
     private void DestroyEnemy()
     {
