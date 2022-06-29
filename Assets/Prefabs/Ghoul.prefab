@@ -1101,7 +1101,7 @@ GameObject:
   - component: {fileID: 3081974421181499600}
   m_Layer: 8
   m_Name: Ghoul
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1159,8 +1159,8 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.37142247
-  m_Height: 2.2290711
+  m_Radius: 0.48
+  m_Height: 3.39
   m_Direction: 1
   m_Center: {x: -0.0000000047850426, y: 1.8560613, z: 0.40348366}
 --- !u!114 &3081974421181499613
@@ -1209,6 +1209,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4f4dfc18908051146b6811690cab15b0, type: 3}
   - {fileID: 8300000, guid: fc1055999747bd44ea25c2f581da7203, type: 3}
   - {fileID: 8300000, guid: e5701287202bcca47bdb8ab635c9ff25, type: 3}
+  ghoulDeath: {fileID: 8300000, guid: 30256bc1f259819439ac9c16e13648ee, type: 3}
   footstepOffset: 0.6
 --- !u!195 &3081974421181499603
 NavMeshAgent:
