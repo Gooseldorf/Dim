@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using PlayerMovement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Trigger : MonoBehaviour
 {
-    //private Action _setTriggerInactive;
-    
     [SerializeField] private GameObject enemy;
     public GameObject spawner;
     [SerializeField] public bool canTrigger = true;
@@ -54,19 +53,15 @@ public class Trigger : MonoBehaviour
             }
         }
     }
-
     private IEnumerator TriggerCooling()
     {
         yield return new WaitForSeconds(10);
         SetActive();
-        
     }
-
     private void SetInactive()
     {
         canTrigger = false;
     }
-
     private void SetActive()
     {
         canTrigger = true;

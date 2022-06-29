@@ -15,6 +15,7 @@ public class UI : MonoBehaviour
 
     private void OnEnable()
     {
+        Level2Handler.Level2started += Level2UI;
         FirstPersonController.OnDamage += UpdateHealthText;
         FirstPersonController.OnHeal += UpdateHealthText;
         LorePaperScript.Reading += UpdateLorePaperText;
@@ -31,12 +32,17 @@ public class UI : MonoBehaviour
         KeyScript.KeyOnFocus -= UpdateInteractionText;
         KeyPad.KeyPadInteracted -= ShowKeyPad;
         Trigger.SpawnChanceUpdate -= UpdateSpawnChance;
-
+        Level2Handler.Level2started += Level2UI;
     }
     
     private void Start()
     {
         UpdateHealthText(100);
+    }
+
+    private void Level2UI()
+    {
+        spawnChanceImage.enabled = false;
     }
     private void UpdateHealthText(float currentHealth)
     {

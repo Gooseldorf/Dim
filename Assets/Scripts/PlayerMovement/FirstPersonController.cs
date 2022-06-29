@@ -139,6 +139,14 @@ namespace PlayerMovement
         private GameObject _levelManager;
         [SerializeField] private UI UI;
         
+        //lvl2
+        private bool _isLevel2;
+        
+        //Shooting
+        [SerializeField] private GameObject weapon;
+        private Vector3 _normalWeaponPosition;
+        private Vector3 _zoomWeaponPosition;
+        
         
         //SLIDING
         private Vector3 _hitPointNormal;
@@ -162,13 +170,14 @@ namespace PlayerMovement
         {
             OnTakeDamage += ApplyDamage;
             KeyPad.LevelCompleted += CompleteLevel;
+            Level2Handler.Level2started += HandleLevel2;
         }
 
         private void OnDisable()
         {
             OnTakeDamage -= ApplyDamage;
             KeyPad.LevelCompleted -= CompleteLevel;
-
+            Level2Handler.Level2started += HandleLevel2;
         }
 
         void Awake()
@@ -185,6 +194,8 @@ namespace PlayerMovement
             _flashLight.enabled = false;
             flashLightOn = false;
             _crossHair = GameObject.Find("CrossHair");
+            _normalWeaponPosition = weapon.transform.localPosition;
+            _zoomWeaponPosition = new Vector3(0.0045f, -0.068f, 0);
             _crossHair.SetActive(false);
             _levelManager = GameObject.Find("LevelManager");
         }
@@ -226,9 +237,12 @@ namespace PlayerMovement
                 ApplyFinalMovements();
             }
         }
-        
-        
 
+
+        private void HandleLevel2()
+        {
+            _isLevel2 = true;
+        }
         private void HandleMoveInput()
         {
             _currentInput = new Vector2((isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
@@ -304,8 +318,7 @@ namespace PlayerMovement
         
         private void HandleInteractionCheck()
         {
-            if (Physics.Raycast(_playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit,
-                    interactionDistance))
+            if (Physics.Raycast(_playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit, interactionDistance))
             {
                 if (hit.collider.gameObject.layer == 11 && (_currentInteractable == null || hit.collider.gameObject.GetInstanceID() != _currentInteractable.GetInstanceID()))
                 {
@@ -473,15 +486,18 @@ namespace PlayerMovement
         {
             float targetFOV = isEnter ? zoomFOV : _defaultFOV;
             float startingFOV = _playerCamera.fieldOfView;
+            Vector3 targetWeaponPosition = isEnter ? _zoomWeaponPosition : _normalWeaponPosition;
+            Vector3 startingWeaponPosition = weapon.transform.localPosition;
             float timeElapsed = 0;
 
             while (timeElapsed < timeToZoom)
             {
                 _playerCamera.fieldOfView = Mathf.Lerp(startingFOV, targetFOV, timeElapsed / timeToZoom);
+                weapon.transform.localPosition = Vector3.Lerp(startingWeaponPosition, targetWeaponPosition, timeElapsed / timeToZoom);
                 timeElapsed += Time.deltaTime;
                 yield return null;
             }
-
+            weapon.transform.localPosition = targetWeaponPosition;
             _playerCamera.fieldOfView = targetFOV;
             _zoomRoutine = null;
         }

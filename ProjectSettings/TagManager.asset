@@ -16,6 +16,7 @@ TagManager:
   - QuestDoor/QuestDoor3
   - Enemy
   - WalkPoint
+  - AK47
   layers:
   - Default
   - TransparentFX

@@ -1189,7 +1189,7 @@ MonoBehaviour:
   sightRange: 50
   attackRange: 1.5
   damageRange: 2.5
-  health: 10
+  health: 100
   ghoulActionSounds:
   - {fileID: 8300000, guid: e66b136e063cc4049b96679b13228187, type: 3}
   - {fileID: 8300000, guid: 02f5f49cf068bac498880a346e63a1ea, type: 3}
@@ -1203,6 +1203,12 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 6af94a40fed40c44c82de5fb0fa561f2, type: 3}
   - {fileID: 8300000, guid: c3a0d384acb5b9a4d8af0bee5d2820a6, type: 3}
   - {fileID: 8300000, guid: e702c6b7953d72f42a62778c969b44ce, type: 3}
+  ghoulDamageSounds:
+  - {fileID: 8300000, guid: dd1343e906cc1d54dbd280a2174d08da, type: 3}
+  - {fileID: 8300000, guid: 8a2a385cc85895244bc26297ec6b26d1, type: 3}
+  - {fileID: 8300000, guid: 4f4dfc18908051146b6811690cab15b0, type: 3}
+  - {fileID: 8300000, guid: fc1055999747bd44ea25c2f581da7203, type: 3}
+  - {fileID: 8300000, guid: e5701287202bcca47bdb8ab635c9ff25, type: 3}
   footstepOffset: 0.6
 --- !u!195 &3081974421181499603
 NavMeshAgent:
