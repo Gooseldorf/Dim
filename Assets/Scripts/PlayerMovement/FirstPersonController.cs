@@ -171,13 +171,16 @@ namespace PlayerMovement
             OnTakeDamage += ApplyDamage;
             KeyPad.LevelCompleted += CompleteLevel;
             Level2Handler.Level2started += HandleLevel2;
+            Weapon.IsReloading += FlashLightBlinkingOnReloading;
         }
 
         private void OnDisable()
         {
             OnTakeDamage -= ApplyDamage;
             KeyPad.LevelCompleted -= CompleteLevel;
-            Level2Handler.Level2started += HandleLevel2;
+            Level2Handler.Level2started -= HandleLevel2;
+            Weapon.IsReloading -= FlashLightBlinkingOnReloading;
+
         }
 
         void Awake()
@@ -242,6 +245,9 @@ namespace PlayerMovement
         private void HandleLevel2()
         {
             _isLevel2 = true;
+            maxHealth = 210;
+            _currentHealth = maxHealth;
+            healthValueIncrement = 2;
         }
         private void HandleMoveInput()
         {
@@ -528,6 +534,10 @@ namespace PlayerMovement
                     _healthRegeneration = null;
                 }
             }
+        }
+        private void FlashLightBlinkingOnReloading()
+        {
+            StartCoroutine(FlashLightBlinking());
         }
         private IEnumerator FlashLightBlinking()
         {

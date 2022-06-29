@@ -11,6 +11,13 @@ public class UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lorePaperText = default;
     [SerializeField] private GameObject keypad = default;
     [SerializeField] private Image spawnChanceImage;
+    [SerializeField] private TextMeshProUGUI ammoText = default;
+    [SerializeField] private TextMeshProUGUI enemyCounter;
+    [SerializeField] private GameObject exit;
+    private int numberOfEnemies;
+    private int enemiesLeft;
+    public static Action Level2Completed;
+    
     
 
     private void OnEnable()
@@ -22,6 +29,8 @@ public class UI : MonoBehaviour
         KeyScript.KeyOnFocus += UpdateInteractionText;
         KeyPad.KeyPadInteracted += ShowKeyPad;
         Trigger.SpawnChanceUpdate += UpdateSpawnChance;
+        Weapon.AmmoChanged += UpdateAmmoText;
+        EnemyBehavior.EnemyDown += UpdateEnemyCounter;
     }
 
     private void OnDisable()
@@ -32,12 +41,19 @@ public class UI : MonoBehaviour
         KeyScript.KeyOnFocus -= UpdateInteractionText;
         KeyPad.KeyPadInteracted -= ShowKeyPad;
         Trigger.SpawnChanceUpdate -= UpdateSpawnChance;
-        Level2Handler.Level2started += Level2UI;
+        Level2Handler.Level2started -= Level2UI;
+        Weapon.AmmoChanged -= UpdateAmmoText;
+        EnemyBehavior.EnemyDown -= UpdateEnemyCounter;
+
+
     }
     
     private void Start()
     {
         UpdateHealthText(100);
+        numberOfEnemies = GameObject.FindGameObjectsWithTag("Enemy").Length;
+        enemiesLeft = numberOfEnemies+1;
+        UpdateEnemyCounter();
     }
 
     private void Level2UI()
@@ -73,5 +89,21 @@ public class UI : MonoBehaviour
     private void UpdateSpawnChance(float spawnChance)
     {
         spawnChanceImage.fillAmount = spawnChance / 100;
+    }
+
+    private void UpdateAmmoText(int ammoLoad, int maxAmmo)
+    {
+        ammoText.text = $"Ammo : {ammoLoad}/{maxAmmo}";
+    }
+
+    private void UpdateEnemyCounter()
+    {
+        enemiesLeft -= 1;
+        enemyCounter.text = $"Enemies: {enemiesLeft}/{numberOfEnemies}";
+        if (enemiesLeft == 0)
+        {
+            Level2Completed?.Invoke();
+            exit.SetActive(true);
+        }
     }
 }

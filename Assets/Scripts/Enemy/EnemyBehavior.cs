@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PlayerMovement;
 using UnityEngine;
@@ -33,14 +34,19 @@ public class EnemyBehavior : MonoBehaviour
     [SerializeField] private AudioClip[] ghoulActionSounds;
     [SerializeField] private AudioClip[] ghoulFootstepSounds;
     [SerializeField] private AudioClip[] ghoulDamageSounds;
+    [SerializeField] private AudioClip ghoulDeath;
+
     private AudioSource _ghoulAudioSource;
     [SerializeField] private float footstepOffset = 0.5f;
     private float _footstepTimer = 0;
     private float _naturalSoundsTimer = 0;
+    public static Action EnemyDown;
     
     //Animation
     private Animation enemyAnimation;
 
+
+    private bool _isDead;
 
     private void OnEnable()
     {
@@ -136,7 +142,9 @@ public class EnemyBehavior : MonoBehaviour
             
                 //Костыль LegacyAnimation антагониста. По хорошему - конвертировать в custom запилить ивент в анимации.
                 float timeToDamageAnimation = 1f;
-                Invoke(nameof(DeliverDamageByAnimation),timeToDamageAnimation);
+                
+                if(!_isDead) 
+                    Invoke(nameof(DeliverDamageByAnimation),timeToDamageAnimation);
             
                 Invoke(nameof(ResetAttack),timeBetweenAttacks);
             }
@@ -144,7 +152,7 @@ public class EnemyBehavior : MonoBehaviour
     
     private void DeliverDamageByAnimation()
         {
-            if(playerInDamageRange)
+            if(playerInDamageRange && !_isDead)
                 FirstPersonController.OnTakeDamage(damage);
         }
     private void ResetAttack()
@@ -158,14 +166,24 @@ public class EnemyBehavior : MonoBehaviour
         
         if (health < 0)
         {
-            sightRange = 0;
-            enemyAnimation.clip = enemyAnimation.GetClip("Death");
-            enemyAnimation.Play();
-            Invoke(nameof(DestroyEnemy),enemyAnimation.clip.length);
+            _isDead = true;
+           StartCoroutine(GhoulDeath());
         }
     }
+
+    private IEnumerator GhoulDeath()
+    {
+        
+        sightRange = 0;
+        enemyAnimation.clip = enemyAnimation.GetClip("Death");
+        enemyAnimation.Play();
+        yield return new WaitForSeconds(enemyAnimation.clip.length);
+        DestroyEnemy();
+    }
+
     private void DestroyEnemy()
     {
+        EnemyDown?.Invoke();
         Destroy(gameObject);
     }
     private void HideFromPlayer()
