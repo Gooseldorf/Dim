@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using PlayerMovement;
 using UnityEngine;
 using UnityEngine.AI;
@@ -64,7 +63,6 @@ public class EnemyBehavior : MonoBehaviour
         _ghoulAudioSource.PlayOneShot(ghoulActionSounds[0]);
         _player = GameObject.FindGameObjectWithTag("Player").transform;
         _agent = GetComponent<NavMeshAgent>();
-        sightRange = 30;
         placesToHide = GameObject.FindGameObjectsWithTag("WalkPoint");
         
         
@@ -175,9 +173,14 @@ public class EnemyBehavior : MonoBehaviour
     {
         
         sightRange = 0;
+        gameObject.GetComponent<Collider>().enabled = false;
+        _ghoulAudioSource.PlayOneShot(ghoulDeath);
         enemyAnimation.clip = enemyAnimation.GetClip("Death");
         enemyAnimation.Play();
         yield return new WaitForSeconds(enemyAnimation.clip.length);
+        gameObject.GetComponentInChildren<ParticleSystem>().Play();
+        gameObject.GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+        yield return new WaitForSeconds(1.5f);
         DestroyEnemy();
     }
 
@@ -211,6 +214,11 @@ public class EnemyBehavior : MonoBehaviour
         return closestWayPoint;
     }
 
+    public void ActivateEnemy()
+    {
+        _ghoulAudioSource.PlayOneShot(ghoulActionSounds[0]);
+        sightRange = 20;
+    }
     
     private void OnDrawGizmosSelected()
         {

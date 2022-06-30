@@ -189,8 +189,6 @@ namespace PlayerMovement
             _characterController = GetComponent<CharacterController>();
             _defaultYpos = _playerCamera.transform.localPosition.y;
             _defaultFOV = _playerCamera.fieldOfView;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
             _currentHealth = maxHealth;
             _postProcessVolume = _playerCamera.GetComponent<PostProcessVolume>();
             _flashLight = GetComponentInChildren<Light>();
@@ -562,7 +560,10 @@ namespace PlayerMovement
             footstepAudioSource.PlayOneShot(flashLight[1]);
             _flashLight.enabled = false;
             GameObject.Destroy(_levelManager);
-            SceneManager.LoadScene("MainMenu");
+            if (_isLevel2)
+                SceneManager.LoadScene("Level2");
+            else
+                SceneManager.LoadScene("MainMenu");
         }
 
         private IEnumerator CompleteLevelCoroutine()
@@ -572,7 +573,9 @@ namespace PlayerMovement
             yield return new WaitForSeconds(1f);
             _flashLight.enabled = false;
             footstepAudioSource.PlayOneShot(reloadGunAudio,2f);
-            
+            yield return new WaitForSeconds(3);
+            SceneManager.LoadScene("Level2");
+
         }
     }
 }

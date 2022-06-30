@@ -17,6 +17,7 @@ public class UI : MonoBehaviour
     private int numberOfEnemies;
     private int enemiesLeft;
     public static Action Level2Completed;
+    private bool _isLevel2;
     
     
 
@@ -51,14 +52,15 @@ public class UI : MonoBehaviour
     private void Start()
     {
         UpdateHealthText(100);
-        numberOfEnemies = GameObject.FindGameObjectsWithTag("Enemy").Length;
-        enemiesLeft = numberOfEnemies+1;
-        UpdateEnemyCounter();
     }
 
     private void Level2UI()
     {
+        _isLevel2 = true;
+        numberOfEnemies = GameObject.FindGameObjectsWithTag("Enemy").Length;
+        enemiesLeft = numberOfEnemies+1;
         spawnChanceImage.enabled = false;
+        UpdateEnemyCounter();
     }
     private void UpdateHealthText(float currentHealth)
     {
@@ -98,12 +100,15 @@ public class UI : MonoBehaviour
 
     private void UpdateEnemyCounter()
     {
-        enemiesLeft -= 1;
-        enemyCounter.text = $"Enemies: {enemiesLeft}/{numberOfEnemies}";
-        if (enemiesLeft == 0)
+        if (_isLevel2)
         {
-            Level2Completed?.Invoke();
-            exit.SetActive(true);
+            enemiesLeft -= 1;
+            enemyCounter.text = $"Enemies: {enemiesLeft}/{numberOfEnemies}";
+            if (enemiesLeft == 0)
+            {
+                Level2Completed?.Invoke();
+                exit.SetActive(true);
+            }
         }
     }
 }
