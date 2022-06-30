@@ -45,5 +45,6 @@ public class LevelManager : MonoBehaviour
 
         scene.allowSceneActivation = true;
         loadingCanvas.SetActive(false);
+        _target = 0;
     }
 }
