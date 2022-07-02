@@ -548,6 +548,7 @@ namespace PlayerMovement
                 yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
             }
             _flashLight.enabled = false;
+            flashLightOn = false;
         }
         private IEnumerator PlayerDeath()
         {
