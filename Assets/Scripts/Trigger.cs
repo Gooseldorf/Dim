@@ -29,7 +29,7 @@ public class Trigger : MonoBehaviour
 
     private void Update()
     {
-        _speedMultiplier = _playerScript.IsSprinting ? 1f : _playerScript.isCrouching ? crouchMultiplier : walkMultiplier;
+        _speedMultiplier = _playerScript.IsSprinting && !_playerScript.isCrouching ? 1f : _playerScript.isCrouching ? crouchMultiplier : walkMultiplier;
         if (_playerScript.flashLightOn)
             finalSpawnChance = _speedMultiplier * spawnChance;
         else if (!_playerScript.flashLightOn)
