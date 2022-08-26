@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class UI : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI healthText = default;
     [SerializeField] private TextMeshProUGUI interactionText = default;
     [SerializeField] private TextMeshProUGUI lorePaperText = default;
     [SerializeField] private GameObject keypad = default;
@@ -14,30 +13,27 @@ public class UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI ammoText = default;
     [SerializeField] private TextMeshProUGUI enemyCounter;
     [SerializeField] private GameObject exit;
-    private int numberOfEnemies;
-    private int enemiesLeft;
-    public static Action Level2Completed;
+    private int _numberOfEnemies;
+    private int _enemiesLeft;
     private bool _isLevel2;
+    public static Action Level2Completed;
     
     
 
     private void OnEnable()
     {
         Level2Handler.Level2started += Level2UI;
-        FirstPersonController.OnDamage += UpdateHealthText;
-        FirstPersonController.OnHeal += UpdateHealthText;
         LorePaperScript.Reading += UpdateLorePaperText;
         KeyScript.KeyOnFocus += UpdateInteractionText;
         KeyPad.KeyPadInteracted += ShowKeyPad;
         Trigger.SpawnChanceUpdate += UpdateSpawnChance;
         Weapon.AmmoChanged += UpdateAmmoText;
         EnemyBehavior.EnemyDown += UpdateEnemyCounter;
+        DoorScript.DoorIsLocked += UpdateInteractionText;
     }
 
     private void OnDisable()
     {
-        FirstPersonController.OnDamage -= UpdateHealthText;
-        FirstPersonController.OnHeal -= UpdateHealthText;
         LorePaperScript.Reading -= UpdateLorePaperText;
         KeyScript.KeyOnFocus -= UpdateInteractionText;
         KeyPad.KeyPadInteracted -= ShowKeyPad;
@@ -45,32 +41,24 @@ public class UI : MonoBehaviour
         Level2Handler.Level2started -= Level2UI;
         Weapon.AmmoChanged -= UpdateAmmoText;
         EnemyBehavior.EnemyDown -= UpdateEnemyCounter;
-
+        DoorScript.DoorIsLocked -= UpdateInteractionText;
 
     }
     
-    private void Start()
-    {
-        UpdateHealthText(100);
-    }
-
     private void Level2UI()
     {
         _isLevel2 = true;
-        numberOfEnemies = GameObject.FindGameObjectsWithTag("Enemy").Length;
-        enemiesLeft = numberOfEnemies+1;
+        _numberOfEnemies = GameObject.FindGameObjectsWithTag("Enemy").Length;
+        _enemiesLeft = _numberOfEnemies+1;
         spawnChanceImage.enabled = false;
         UpdateEnemyCounter();
     }
-    private void UpdateHealthText(float currentHealth)
-    {
-        healthText.text = $"HEALTH {currentHealth}";
-    }
-    private void UpdateInteractionText(string action)
+   
+    public void UpdateInteractionText(string action)
     {
         interactionText.text = action;
     }
-    private void UpdateLorePaperText(string text)
+    public void UpdateLorePaperText(string text)
     {
         lorePaperText.text = text;
     }
@@ -102,9 +90,9 @@ public class UI : MonoBehaviour
     {
         if (_isLevel2)
         {
-            enemiesLeft -= 1;
-            enemyCounter.text = $"Enemies: {enemiesLeft}/{numberOfEnemies}";
-            if (enemiesLeft == 0)
+            _enemiesLeft -= 1;
+            enemyCounter.text = $"Enemies: {_enemiesLeft}/{_numberOfEnemies}";
+            if (_enemiesLeft == 0)
             {
                 Level2Completed?.Invoke();
                 exit.SetActive(true);

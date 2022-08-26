@@ -10,24 +10,22 @@ public class EnemyBehavior : MonoBehaviour
 { 
     private NavMeshAgent _agent;
     private Transform _player;
-    [SerializeField] private LayerMask isGround, isPlayer;
+    private FirstPersonController _playerController;
+    [SerializeField] private LayerMask isPlayer;
     [SerializeField] private GameObject[] placesToHide;
     
-    //Patrolling
-    public Vector3 walkPoint;
-    private bool _walkPointSet;
-    public float walkPointRange;
-    
     //Attacking
-    private float timeBetweenAttacks;
+    private float _timeBetweenAttacks;
     private bool _isAttacking;
-    [SerializeField] private float rotationSpeed = 10;
+    private bool _canAttack;
     [SerializeField] private float damage = 50;
+    [SerializeField] private LayerMask obstacleLayerMask;
     
     //States
     [SerializeField]private float sightRange, attackRange, damageRange;
-    private bool playerInSightRange, playerInAttackRange, playerInDamageRange;
+    private bool _playerInSightRange, _playerInAttackRange, _playerInDamageRange;
     [SerializeField] private float health;
+    private bool _isDead;
 
     //Audio
     [SerializeField] private AudioClip[] ghoulActionSounds;
@@ -39,14 +37,12 @@ public class EnemyBehavior : MonoBehaviour
     [SerializeField] private float footstepOffset = 0.5f;
     private float _footstepTimer = 0;
     private float _naturalSoundsTimer = 0;
-    public static Action EnemyDown;
     
     //Animation
-    private Animation enemyAnimation;
-
-
-    private bool _isDead;
-
+    private Animation _enemyAnimation;
+    
+    public static Action EnemyDown;
+    
     private void OnEnable()
     {
         EventManager.OnSafeSpaceTrigger += HideFromPlayer;
@@ -55,73 +51,58 @@ public class EnemyBehavior : MonoBehaviour
     {
         EventManager.OnSafeSpaceTrigger -= HideFromPlayer;
     }
-
     
     public void Awake()
     {
         _ghoulAudioSource = GetComponent<AudioSource>();
         _ghoulAudioSource.PlayOneShot(ghoulActionSounds[0]);
         _player = GameObject.FindGameObjectWithTag("Player").transform;
+        _playerController = FindObjectOfType<FirstPersonController>();
         _agent = GetComponent<NavMeshAgent>();
         placesToHide = GameObject.FindGameObjectsWithTag("WalkPoint");
+        _enemyAnimation = gameObject.GetComponent<Animation>();
+        _enemyAnimation.clip = _enemyAnimation.GetClip("Idle");
+        _enemyAnimation.Play();
         
-        
-        enemyAnimation = gameObject.GetComponent<Animation>();
-        enemyAnimation.clip = enemyAnimation.GetClip("Idle");
-        enemyAnimation.Play(); 
-
     }
     
     public void Update()
     {
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, isPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
-        playerInDamageRange = Physics.CheckSphere(transform.position, damageRange, isPlayer);
+        _playerInSightRange = Physics.CheckSphere(transform.position, sightRange, isPlayer);
+        _playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
+        _playerInDamageRange = Physics.CheckSphere(transform.position, damageRange, isPlayer);
         
-        
-        //if(!playerInSightRange && !playerInAttackRange) Patrolling();
-        if(playerInSightRange && !playerInAttackRange && !_isAttacking) Chase();
-        if(playerInSightRange && playerInAttackRange) Attack();
-        
+        if(!_playerController.flashLightOn && !_playerInAttackRange && !_playerController.IsSprinting) Idle();
+        if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && _playerController.flashLightOn) Chase();
+        if(_playerInSightRange && _playerInAttackRange && PlayerIsInSight()) Attack();
     }
 
-    private void Patrol()
+    private void Idle()
     {
-        if (!_walkPointSet) 
-            SearchWalkPoint();
-        
-        if (_walkPointSet) 
-            _agent.SetDestination(walkPoint);
-    
-        Vector3 distanceToWalkPoint = transform.position - walkPoint;
-    
-        if (distanceToWalkPoint.magnitude < 1f)
-            _walkPointSet = false;
-    
+        _enemyAnimation.clip = _enemyAnimation.GetClip("Idle");
+        _enemyAnimation.Play();
     }
-    private void SearchWalkPoint()
-    {
-        float randomZ = Random.Range(-walkPointRange, walkPointRange);
-        float randomX = Random.Range(-walkPointRange, walkPointRange);
     
-        walkPoint = new Vector3(transform.position.x + randomX, transform.position.y, transform.position.z + randomZ);
-        if (Physics.Raycast(walkPoint, -transform.up, 2f, isGround))
-            _walkPointSet = true;
-    }
-
-
     private void Chase()
     {
         _agent.SetDestination(_player.position);
-        enemyAnimation.clip = enemyAnimation.GetClip("Run");
-        enemyAnimation.Play();
+        _enemyAnimation.clip = _enemyAnimation.GetClip("Run");
+        _enemyAnimation.Play();
         _footstepTimer -= Time.deltaTime;
         if (_footstepTimer <= 0)
         {
-            _ghoulAudioSource.PlayOneShot(ghoulFootstepSounds[Random.Range(0, ghoulFootstepSounds.Length - 1)],0.2f);
+            _ghoulAudioSource.PlayOneShot(ghoulFootstepSounds[Random.Range(0, ghoulFootstepSounds.Length - 1)],1f);
             _footstepTimer = footstepOffset;
         }
-        
+    }
+
+    private bool PlayerIsInSight()
+    {
+        Vector3 directionToTarget = (_player.position - transform.position).normalized;
+        if (!Physics.Raycast(transform.position, directionToTarget, attackRange, obstacleLayerMask))
+            return true;
+        else
+            return false;
     }
 
     private void Attack()
@@ -129,28 +110,27 @@ public class EnemyBehavior : MonoBehaviour
             _agent.SetDestination(transform.position);
             transform.LookAt(_player);
             transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, transform.eulerAngles.z);
-            timeBetweenAttacks = enemyAnimation.GetClip("Attack2").length;
+            _timeBetweenAttacks = _enemyAnimation.GetClip("Attack2").length;
         
             if (!_isAttacking)
             {
                 _isAttacking = true;
-                enemyAnimation.clip = enemyAnimation.GetClip("Attack2");
-                enemyAnimation.Play();
+                _enemyAnimation.clip = _enemyAnimation.GetClip("Attack2");
+                _enemyAnimation.Play();
                 _ghoulAudioSource.PlayOneShot(ghoulActionSounds[1]);
             
-                //Костыль LegacyAnimation антагониста. По хорошему - конвертировать в custom запилить ивент в анимации.
-                float timeToDamageAnimation = 1f;
+                float timeToDeliverDamageViaAnimation = 1f;
                 
                 if(!_isDead) 
-                    Invoke(nameof(DeliverDamageByAnimation),timeToDamageAnimation);
+                    Invoke(nameof(DeliverDamageViaAnimation),timeToDeliverDamageViaAnimation);
             
-                Invoke(nameof(ResetAttack),timeBetweenAttacks);
+                Invoke(nameof(ResetAttack),_timeBetweenAttacks);
             }
         }
     
-    private void DeliverDamageByAnimation()
+    private void DeliverDamageViaAnimation()
         {
-            if(playerInDamageRange && !_isDead)
+            if(_playerInDamageRange && !_isDead)
                 FirstPersonController.OnTakeDamage(damage);
         }
     private void ResetAttack()
@@ -171,13 +151,12 @@ public class EnemyBehavior : MonoBehaviour
 
     private IEnumerator GhoulDeath()
     {
-        
         sightRange = 0;
         gameObject.GetComponent<Collider>().enabled = false;
         _ghoulAudioSource.PlayOneShot(ghoulDeath);
-        enemyAnimation.clip = enemyAnimation.GetClip("Death");
-        enemyAnimation.Play();
-        yield return new WaitForSeconds(enemyAnimation.clip.length);
+        _enemyAnimation.clip = _enemyAnimation.GetClip("Death");
+        _enemyAnimation.Play();
+        yield return new WaitForSeconds(_enemyAnimation.clip.length);
         gameObject.GetComponentInChildren<ParticleSystem>().Play();
         gameObject.GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
         yield return new WaitForSeconds(1.5f);
@@ -192,8 +171,8 @@ public class EnemyBehavior : MonoBehaviour
     private void HideFromPlayer()
     {
         _ghoulAudioSource.PlayOneShot(ghoulActionSounds[2]);
-        enemyAnimation.clip = enemyAnimation.GetClip("Run");
-        enemyAnimation.PlayQueued("Run");
+        _enemyAnimation.clip = _enemyAnimation.GetClip("Run");
+        _enemyAnimation.PlayQueued("Run");
         sightRange = 0;
         Vector3 closestWaypoint = FindClosestWayPoint();
         _agent.SetDestination(closestWaypoint);

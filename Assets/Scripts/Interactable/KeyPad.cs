@@ -1,18 +1,19 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using PlayerMovement;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class KeyPad : Interactable
 {
-    public static Action KeyPadInteracted;
     private FirstPersonController _player;
-    public string correctPassword = "1408";
+
+    [SerializeField] private int correctPassword = 1408;
     private string _playerInput;
+    
     [SerializeField] private AudioClip[] keyPadSounds;
     private AudioSource _keyPadAudioSource;
+    
+    
+    public static Action KeyPadInteracted;
     public static Action LevelCompleted;
     private void Awake()
     {
@@ -28,13 +29,12 @@ public class KeyPad : Interactable
     public void PlayerKeyPadInput(int number)
     {
         _playerInput += number.ToString();
-        if (_playerInput.Length >= 5)
+        if (_playerInput.Length > correctPassword.ToString().Length)
         {
             _keyPadAudioSource.PlayOneShot(keyPadSounds[1]);
-            Clear();
+           Clear();
         }
     }
-
     public void Clear()
     {
         _playerInput = "";
@@ -42,7 +42,9 @@ public class KeyPad : Interactable
 
     public void CheckPassword()
     {
-        if (_playerInput == correctPassword)
+        if (!int.TryParse(_playerInput, out var parsedPlayerInput)) return;
+        
+        if (parsedPlayerInput == correctPassword) 
         {
             _keyPadAudioSource.PlayOneShot(keyPadSounds[0]);
             Clear();
@@ -62,3 +64,5 @@ public class KeyPad : Interactable
     {
     }
 }
+
+

@@ -269,7 +269,6 @@ GameObject:
   - component: {fileID: 8636940943968499319}
   - component: {fileID: 8636940943968499318}
   - component: {fileID: 8636940943968499312}
-  - component: {fileID: 8636940943968499314}
   - component: {fileID: 8636940943968499313}
   m_Layer: 7
   m_Name: PlayerLvl2
@@ -396,21 +395,7 @@ MonoBehaviour:
   canUseFlashlight: 1
   flashLightOn: 0
   UI: {fileID: 0}
---- !u!114 &8636940943968499314
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8636940943968499317}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8654c64b6259db43a7215cb16452b6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hasKeyFromQuestDoor1: 0
-  hasKeyFromQuestDoor2: 0
-  hasKeyFromQuestDoor3: 0
+  weapon: {fileID: 0}
 --- !u!82 &8636940943968499313
 AudioSource:
   m_ObjectHideFlags: 0
