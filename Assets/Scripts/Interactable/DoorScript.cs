@@ -1,16 +1,17 @@
+using System;
 using System.Collections;
+using PlayerMovement;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class DoorScript : Interactable
 {
+    public static Action <string> DoorIsLocked;
     private NavMeshObstacle _obstacle;
     public bool isOpen = false;
     public bool isLocked = false;
-    [SerializeField] private bool isRotatingDoor = true;
-    [SerializeField] private float speed = 1f;
 
-    private Vector3 _startRotation1;
+    private Vector3 _startRotation;
     private Quaternion _closedPosition;
     private Quaternion _openedPosition;
 
@@ -19,17 +20,24 @@ public class DoorScript : Interactable
     [SerializeField] private AudioClip[] doorSounds;
     private AudioSource _doorAudioSource;
     
+    private FirstPersonController _playerController;
+    
     private void Awake()
     {
-        _obstacle = GetComponent<NavMeshObstacle>();
-        _obstacle.carveOnlyStationary = false;
-        _obstacle.carving = isOpen;
-        _obstacle.enabled = isOpen;
         
-        _startRotation1 = transform.rotation.eulerAngles;
+        _startRotation = transform.rotation.eulerAngles;
         _closedPosition = transform.rotation;
-        _openedPosition = Quaternion.Euler(0, _startRotation1.y + 90,0);
+        _openedPosition = Quaternion.Euler(0, _startRotation.y + 90,0);
         _doorAudioSource = GetComponent<AudioSource>();
+        _playerController = FindObjectOfType<FirstPersonController>();
+        
+        _obstacle = GetComponent<NavMeshObstacle>();
+        _obstacle.carveOnlyStationary = true;
+        _obstacle.carving = true;
+        if (isLocked)
+            _obstacle.enabled = true;
+        else
+            _obstacle.enabled = false;
     }
 
     public void Open()
@@ -44,23 +52,17 @@ public class DoorScript : Interactable
             else
             {
                 _doorAudioSource.PlayOneShot(doorSounds[2]);
+                DoorIsLocked?.Invoke("Need a key");
             }
         }
-        if (!isOpen && !isLocked)
-        {
-            if (_animationCoroutine != null)
-            {
-                StopCoroutine(_animationCoroutine);
-            }
 
-            if (isRotatingDoor)
-            {
-                _animationCoroutine = StartCoroutine(DoRotationOpen());
-            }
-
-            _obstacle.enabled = true;
-            _obstacle.carving = true;
-        }
+        if (isOpen || isLocked) return;
+        
+        if (_animationCoroutine != null)
+            StopCoroutine(_animationCoroutine);
+        
+        _animationCoroutine = StartCoroutine(DoRotationOpen());
+        _obstacle.enabled = true;
     }
 
     private IEnumerator DoRotationOpen()
@@ -79,25 +81,17 @@ public class DoorScript : Interactable
     public void Close()
     {
         _doorAudioSource.PlayOneShot(doorSounds[1]);
-        if (isOpen)
-        {
-            if (_animationCoroutine != null)
-            {
-                StopCoroutine(_animationCoroutine);
-            }
+        if (!isOpen) return;
+        
+        if (_animationCoroutine != null)
+            StopCoroutine(_animationCoroutine);
 
-            if (isRotatingDoor)
-            {
-                _animationCoroutine = StartCoroutine(DoRotationClose());
-            }
-        }
+        _animationCoroutine = StartCoroutine(DoRotationClose());
+        _obstacle.enabled = false;
     }
 
     private IEnumerator DoRotationClose()
     {
-        _obstacle.carving = false;
-        _obstacle.enabled = false;
-        
         Quaternion startRotation = _openedPosition;
         Quaternion endRotation = _closedPosition;
         
@@ -106,7 +100,7 @@ public class DoorScript : Interactable
         float time = 0;
         while (startRotation != endRotation)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation,Quaternion.Euler(_startRotation1), time);
+            transform.rotation = Quaternion.Slerp(transform.rotation,Quaternion.Euler(_startRotation), time);
             yield return null;
             time += Time.deltaTime;
         }
@@ -114,27 +108,30 @@ public class DoorScript : Interactable
 
     private bool CheckKey()
     {
-        if (gameObject.CompareTag("QuestDoor/QuestDoor1"))
-            return GameObject.FindGameObjectWithTag("Player").GetComponent<Inventory>().hasKeyFromQuestDoor1;
-        else if (gameObject.CompareTag("QuestDoor/QuestDoor2"))
-            return GameObject.FindGameObjectWithTag("Player").GetComponent<Inventory>().hasKeyFromQuestDoor2;
-        else if (gameObject.CompareTag("QuestDoor/QuestDoor3"))
-            return GameObject.FindGameObjectWithTag("Player").GetComponent<Inventory>().hasKeyFromQuestDoor3;
-        else 
-            return false;
+        switch (gameObject.tag)
+        {
+            case "QuestDoor/QuestDoor1":
+                return _playerController.Inventory.HasKeyFromQuestDoor1;
+            case "QuestDoor/QuestDoor2":
+                return _playerController.Inventory.HasKeyFromQuestDoor2;
+            case "QuestDoor/QuestDoor3":
+                return _playerController.Inventory.HasKeyFromQuestDoor3;
+            default: 
+                return false;
+        }
+
     }
     public override void OnInteract()
     {
-        if (gameObject.TryGetComponent<DoorScript>(out DoorScript door))
+        if (!gameObject.TryGetComponent<DoorScript>(out DoorScript door)) return;
+        
+        if (door.isOpen)
         {
-            if (door.isOpen)
-            {
-                door.Close();
-            }
-            else
-            {
-                door.Open();
-            }
+            door.Close();
+        }
+        else
+        {
+            door.Open();
         }
     }
 
@@ -144,6 +141,7 @@ public class DoorScript : Interactable
     
     public override void OnLoseFocus()
     {
+        DoorIsLocked?.Invoke("");
     }
 
   

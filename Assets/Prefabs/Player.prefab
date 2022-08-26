@@ -95,7 +95,6 @@ GameObject:
   - component: {fileID: 5213679707441314505}
   - component: {fileID: 5213679707441314504}
   - component: {fileID: 5213679707441314510}
-  - component: {fileID: 5213679707441314508}
   - component: {fileID: 5213679707441314511}
   m_Layer: 7
   m_Name: Player
@@ -183,6 +182,7 @@ MonoBehaviour:
   timeToCrouch: 0.25
   crouchingCenter: {x: 0, y: 0.5, z: 0}
   standingCenter: {x: 0, y: 0, z: 0}
+  isCrouching: 0
   walkBobSpeed: 14
   walkBobAmount: 0.05
   sprintBobSpeed: 18
@@ -212,25 +212,16 @@ MonoBehaviour:
   onHit: {fileID: 8300000, guid: 0d07cffdf9922fb4487dceeeedcdaa26, type: 3}
   heartbeat: {fileID: 8300000, guid: 8f9d159357b01994ea0e3a5d309627a0, type: 3}
   breathing: {fileID: 8300000, guid: 1e6839ca0a335be4da43e1c1d8632373, type: 3}
+  deathScream: {fileID: 0}
+  reloadGunAudio: {fileID: 0}
   flashLight:
   - {fileID: 8300000, guid: 56040f65d1dcd254ba8401387db1cbf4, type: 3}
   - {fileID: 8300000, guid: b50b725a7060b4d4fbbdf7bb343963a2, type: 3}
   heartbeatOffset: 0.5
---- !u!114 &5213679707441314508
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5213679707441314507}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8654c64b6259db43a7215cb16452b6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hasKeyFromQuestDoor1: 0
-  hasKeyFromQuestDoor2: 0
-  hasKeyFromQuestDoor3: 0
+  canUseFlashlight: 1
+  flashLightOn: 0
+  UI: {fileID: 0}
+  weapon: {fileID: 0}
 --- !u!82 &5213679707441314511
 AudioSource:
   m_ObjectHideFlags: 0

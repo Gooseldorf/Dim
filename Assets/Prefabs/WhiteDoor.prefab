@@ -9532,7 +9532,7 @@ NavMeshObstacle:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2476946819379788857}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
   m_Extents: {x: 0.5, y: 1, z: 0.05}
@@ -9571,8 +9571,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isOpen: 0
   isLocked: 0
-  isRotatingDoor: 1
-  speed: 1
   doorSounds:
   - {fileID: 8300000, guid: 693912ecd8822f84db65bd0923f634b8, type: 3}
   - {fileID: 8300000, guid: 130381f12a394e84e9788aeba8243b03, type: 3}

@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -6,12 +5,9 @@ using UnityEngine;
 public class HintsScript : MonoBehaviour
 {
     private TextMeshProUGUI _hints;
-    private string _hint1 = "F - включить/выключить фонарик";
-
-    private string _hint2 =
-        "Cтарайтесь не выдать себя. Bероятность обнаружения отражена в правом нижнем углу экрана";
-
-    private string _hint3 = "Чтобы прочесть записку - наведите курсор и посмотрите внимательнее (RMB)";
+    private string _hint1 = "F - toggle flashlight";
+    private string _hint2 = "Light and movement speed affect your visibility. The stealth indicator is located in the lower right corner of the screen";
+    private string _hint3 = "To interact with objet just focus on it by pressing RMB";
 
     private void OnEnable()
     {
@@ -35,19 +31,19 @@ public class HintsScript : MonoBehaviour
 
     private void ChangeHintsForLevel2()
     {
-        _hint1 = "LMB - стрельба. R - перезарядка.";
-        _hint2 = "Уничтожте всех противников на уровне! Cчетчик находится в правом верхнем углу экрана.";
-        _hint3 = "После этого - возвращайтесь к дыре в заборе";
+        _hint1 = "LMB - fire. R - reload.";
+        _hint2 = "Destroy all ghouls on the level! The enemy counter is in the upper right corner of the screen.";
+        _hint3 = "Get back on the streets. The exit is where you came from";
     }
 
     private IEnumerator ShowHideHints()
     {
         _hints.text = _hint1;
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSeconds(8);
         _hints.text = _hint2;
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSeconds(8);
         _hints.text = _hint3;
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSeconds(8);
         gameObject.SetActive(false);
     }
 }

@@ -25,7 +25,7 @@ public class NaturalSounds : MonoBehaviour
         _naturalSoundsTimer -= Time.deltaTime;
         if (_naturalSoundsTimer <= 0)
         {
-            _ghoulNaturalSounds.PlayOneShot(ghoulNaturalSounds[Random.Range(0, ghoulNaturalSounds.Length - 1)]);
+            _ghoulNaturalSounds.PlayOneShot(ghoulNaturalSounds[Random.Range(0, ghoulNaturalSounds.Length - 1)], 1.5f);
             _naturalSoundsTimer = naturalSoundsOffset;
         }
     }
