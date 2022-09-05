@@ -9,11 +9,12 @@ public class PauseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _pauseMenuUI;
     public static bool GameIsPaused;
+    public bool CanPause;
 
     
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && CanPause)
         {
             if (GameIsPaused)
             {

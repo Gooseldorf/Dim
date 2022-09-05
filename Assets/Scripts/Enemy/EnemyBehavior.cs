@@ -42,14 +42,18 @@ public class EnemyBehavior : MonoBehaviour
     private Animation _enemyAnimation;
     
     public static Action EnemyDown;
+    private bool _isLevel2;
+    private bool _reactsOnLight = true;
     
     private void OnEnable()
     {
         EventManager.OnSafeSpaceTrigger += HideFromPlayer;
+        Level2Handler.Level2started += () => _isLevel2 = true;
     }
     private void OnDisable()
     {
         EventManager.OnSafeSpaceTrigger -= HideFromPlayer;
+        Level2Handler.Level2started -= () => _isLevel2 = true;
     }
     
     public void Awake()
@@ -63,7 +67,6 @@ public class EnemyBehavior : MonoBehaviour
         _enemyAnimation = gameObject.GetComponent<Animation>();
         _enemyAnimation.clip = _enemyAnimation.GetClip("Idle");
         _enemyAnimation.Play();
-        
     }
     
     public void Update()
@@ -72,8 +75,8 @@ public class EnemyBehavior : MonoBehaviour
         _playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
         _playerInDamageRange = Physics.CheckSphere(transform.position, damageRange, isPlayer);
         
-        if(!_playerController.flashLightOn && !_playerInAttackRange && !_playerController.IsSprinting) Idle();
-        if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && _playerController.flashLightOn) Chase();
+        if((!_isLevel2 && !_playerController.flashLightOn) && !_playerInAttackRange && !_playerController.IsSprinting) Idle();
+        if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && (_isLevel2 || _playerController.flashLightOn || _playerController.IsSprinting)) Chase();
         if(_playerInSightRange && _playerInAttackRange && PlayerIsInSight()) Attack();
     }
 
@@ -170,7 +173,7 @@ public class EnemyBehavior : MonoBehaviour
     }
     private void HideFromPlayer()
     {
-        _ghoulAudioSource.PlayOneShot(ghoulActionSounds[2]);
+        //_ghoulAudioSource.PlayOneShot(ghoulActionSounds[2]);
         _enemyAnimation.clip = _enemyAnimation.GetClip("Run");
         _enemyAnimation.PlayQueued("Run");
         sightRange = 0;
