@@ -1,12 +1,17 @@
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 public class StartTextScript : MonoBehaviour
 {
     [SerializeField] private GameObject continueButton;
-    IEnumerator Start()
+    
+    private void Start()
+    {
+        StartCoroutine(ShowStartText());
+    }
+
+    IEnumerator ShowStartText()
     {
         gameObject.GetComponent<TextMeshProUGUI>().alpha = 0;
         yield return new WaitForSeconds(3);

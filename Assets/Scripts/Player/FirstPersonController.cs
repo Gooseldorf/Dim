@@ -137,8 +137,8 @@ namespace PlayerMovement
         
         //UI
         private GameObject _crossHair;
-        private GameObject _levelManager;
-        [SerializeField] private UI UI;
+        //private GameObject _levelManager;
+        [SerializeField] private UI ui;
         
         //lvl2
         private bool _isLevel2;
@@ -147,6 +147,8 @@ namespace PlayerMovement
         [SerializeField] private GameObject weapon;
         private Vector3 _normalWeaponPosition;
         private Vector3 _zoomWeaponPosition;
+        private float _weaponDefaultYpos = -0.105f;
+        private float _weaponTimer;
         
         
         //SLIDING
@@ -199,12 +201,14 @@ namespace PlayerMovement
             _normalWeaponPosition = weapon.transform.localPosition;
             _zoomWeaponPosition = new Vector3(0.0045f, -0.068f, 0);
             _crossHair.SetActive(false);
-            _levelManager = GameObject.Find("LevelManager");
+            //_levelManager = GameObject.Find("LevelManager");
             Inventory = new Inventory();
         }
 
         private void Start()
         {
+            // var temp = Time.timeScale;
+            // Time.timeScale = 1;
             CanMove = false;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -293,6 +297,15 @@ namespace PlayerMovement
                     _defaultYpos + Mathf.Sin(_timer) *
                     (isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
                     _playerCamera.transform.localPosition.z);
+
+                if (_isLevel2 && !IsZooming)
+                {
+                    weapon.transform.localPosition = new Vector3(
+                        weapon.transform.localPosition.x,
+                        _weaponDefaultYpos + Mathf.Sin(_timer) *
+                        (isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount) * 0.05f,
+                        weapon.transform.localPosition.z);
+                }
             }
         }
 
@@ -335,11 +348,10 @@ namespace PlayerMovement
             }
             else if (_currentInteractable)
             {
-                
                 _currentInteractable.OnLoseFocus();
                 _currentInteractable = null;
-                UI.UpdateInteractionText("");
-                UI.UpdateLorePaperText("");
+                ui.UpdateInteractionText("");
+                ui.UpdateLorePaperText("");
             }
         }
 
@@ -543,7 +555,10 @@ namespace PlayerMovement
         }
         private void FlashLightBlinkingOnReloading()
         {
+            flashLightOn = true;
+            _flashLight.enabled = true;
             StartCoroutine(FlashLightBlinking());
+            
         }
         private IEnumerator FlashLightBlinking()
         {
@@ -568,16 +583,12 @@ namespace PlayerMovement
             yield return new WaitForSeconds(4f);
             footstepAudioSource.PlayOneShot(flashLight[1]);
             _flashLight.enabled = false;
-            GameObject.Destroy(_levelManager);
-            if (_isLevel2)
-                SceneManager.LoadScene("Level2");
-            else
-                SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("MainMenu");
         }
         private IEnumerator CompleteLevelCoroutine()
         {
             CanMove = false;
-            UI.HideKeyPad();
+            ui.HideKeyPad();
             yield return new WaitForSeconds(1f);
             _flashLight.enabled = false;
             footstepAudioSource.PlayOneShot(reloadGunAudio,2f);

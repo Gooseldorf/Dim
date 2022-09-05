@@ -14,7 +14,6 @@ public class Weapon : MonoBehaviour
     public static Action <int,int> AmmoChanged;
     public static Action IsReloading;
     [SerializeField] private ParticleSystem muzzleFlash;
-    [SerializeField] private Transform bulletSpawner;
     [SerializeField] private AudioClip fire;
     [SerializeField] private AudioClip reload;
     [SerializeField] private AudioClip noAmmo;
@@ -25,10 +24,11 @@ public class Weapon : MonoBehaviour
     private EnemyBehavior _currentEnemy;
     private Light flash;
     private bool _shootCooling;
+    private bool _canReload = true;
 
     private void Awake()
     {
-        _camera = Camera.main;
+        _camera = FindObjectOfType<Camera>();
         flash = GetComponentInChildren<Light>();
         _weaponAudioSource = GetComponent<AudioSource>();
     }
@@ -37,7 +37,7 @@ public class Weapon : MonoBehaviour
     {
         if (canShoot)
         {
-            if (ammoLoaded !=maxAmmo && Input.GetKeyDown(KeyCode.R))
+            if (ammoLoaded !=maxAmmo && Input.GetKeyDown(KeyCode.R) && _canReload)
                 Reload();
             else if(ammoLoaded == 0 && !_shootCooling && Input.GetKey(KeyCode.Mouse0))
                 NoAmmo();
@@ -68,7 +68,7 @@ public class Weapon : MonoBehaviour
 
     private IEnumerator GunShotFlash()
     {
-        _camera.transform.Rotate(_camera.transform.right,2);
+        //_camera.transform.Rotate(_camera.transform.forward,20);
         flash.enabled = true;
         yield return new WaitForSeconds(fireRate);
         flash.enabled = false;
@@ -84,13 +84,15 @@ public class Weapon : MonoBehaviour
     {
         _shootCooling = true;
         _weaponAudioSource.PlayOneShot(noAmmo);
-        yield return new WaitForSeconds(fireRate * 4);
+        yield return new WaitForSeconds(fireRate * 8);
         _shootCooling = false;
     }
 
     private void Reload()
     {
         IsReloading?.Invoke();
+        _shootCooling = true;
+        _canReload = false;
         StartCoroutine(ReloadGun());
     }
 
@@ -100,6 +102,8 @@ public class Weapon : MonoBehaviour
         yield return new WaitForSeconds(reload.length);
         ammoLoaded = maxAmmo;
         flashLight.enabled = true;
+        _shootCooling = false;
         AmmoChanged?.Invoke(ammoLoaded,maxAmmo);
+        _canReload = true;
     }
 }

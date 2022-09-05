@@ -20,6 +20,7 @@ public class Trigger : MonoBehaviour
     private FirstPersonController _playerScript;
     [FormerlySerializedAs("_finalSpawnChance")] public float finalSpawnChance;
     private float _speedMultiplier;
+    public static Action MonsterTrigger;
 
     private void Awake()
     {
@@ -47,6 +48,7 @@ public class Trigger : MonoBehaviour
                 EventManager.MonsterTrigger();
                 SetInactive();
                 StartCoroutine(TriggerCooling());
+                MonsterTrigger?.Invoke();
             }
         }
     }

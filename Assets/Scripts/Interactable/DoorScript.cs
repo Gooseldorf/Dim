@@ -48,6 +48,8 @@ public class DoorScript : Interactable
             {
                 _doorAudioSource.PlayOneShot(doorSounds[3]);
                 isLocked = false;
+                DoorIsLocked?.Invoke("Used a key");
+
             }
             else
             {

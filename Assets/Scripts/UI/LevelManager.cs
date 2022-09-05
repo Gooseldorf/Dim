@@ -40,8 +40,8 @@ public class LevelManager : MonoBehaviour
       
         } while (scene.progress < 0.9f);
 
-        scene.allowSceneActivation = true;
         loadingCanvas.SetActive(false);
+        scene.allowSceneActivation = true;
         _target = 0;
     }
 }
