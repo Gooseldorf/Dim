@@ -74,9 +74,20 @@ public class EnemyBehavior : MonoBehaviour
         _playerInSightRange = Physics.CheckSphere(transform.position, sightRange, isPlayer);
         _playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, isPlayer);
         _playerInDamageRange = Physics.CheckSphere(transform.position, damageRange, isPlayer);
-        
-        if((!_isLevel2 && !_playerController.flashLightOn) && !_playerInAttackRange && !_playerController.IsSprinting) Idle();
-        if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && (_isLevel2 || _playerController.flashLightOn || _playerController.IsSprinting)) Chase();
+
+        if (!_isLevel2)
+        {
+            if(!_playerInAttackRange && !_playerController.IsSprinting && !_playerController.flashLightOn) Idle();
+            if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && (_playerController.flashLightOn || _playerController.IsSprinting)) Chase();
+
+        }
+        else
+        {
+            //if(!_playerInAttackRange && !_playerController.IsSprinting && !_playerController.flashLightOn) Idle();
+            if(_playerInSightRange && !_playerInAttackRange && !_isAttacking) Chase();
+        }
+        //if((!_isLevel2 && !_playerController.flashLightOn) && !_playerInAttackRange && !_playerController.IsSprinting) Idle();
+        //if(_playerInSightRange && !_playerInAttackRange && !_isAttacking && (_isLevel2 || _playerController.flashLightOn || _playerController.IsSprinting)) Chase();
         if(_playerInSightRange && _playerInAttackRange && PlayerIsInSight()) Attack();
     }
 

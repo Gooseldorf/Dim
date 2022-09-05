@@ -555,10 +555,38 @@ namespace PlayerMovement
         }
         private void FlashLightBlinkingOnReloading()
         {
-            flashLightOn = true;
-            _flashLight.enabled = true;
-            StartCoroutine(FlashLightBlinking());
+            StartCoroutine(FlashLightBlinkingOnReloadingCoroutine());
+            StartCoroutine(ReloadCoroutine());
+        }
+
+        private IEnumerator ReloadCoroutine()
+        {
+            float timeToReload = 2.5f;
+            Quaternion targetWeaponRotation = Quaternion.Euler(-15, -30, 0); 
+            Quaternion startingWeaponRotation = weapon.transform.localRotation;
+            float timeElapsed = 0;
+            while (timeElapsed < timeToReload)
+            {
+                weapon.transform.localRotation = Quaternion.Lerp(targetWeaponRotation, targetWeaponRotation, timeElapsed / timeToZoom);
+                timeElapsed += Time.deltaTime;
+                yield return null;
+            }
+            weapon.transform.localRotation = startingWeaponRotation;
             
+        }
+
+        private IEnumerator FlashLightBlinkingOnReloadingCoroutine()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                _flashLight.enabled = false;
+                yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
+                
+                _flashLight.enabled = true;
+                yield return new WaitForSeconds(Random.Range(0,_maxBlinkingSpeed));
+            }
+            _flashLight.enabled = true;
+            flashLightOn = true;
         }
         private IEnumerator FlashLightBlinking()
         {
